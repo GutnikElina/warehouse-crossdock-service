@@ -3,11 +3,19 @@ package com.innowise.warehousecrossdock;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
+@SpringBootApplication(proxyBeanMethods = false)
 public class WarehouseCrossdockServiceApplication {
+  /**
+   * Main method to start the Spring Boot application.
+   *
+   * @param args command line arguments
+   */
+  public static void main(final String[] args) {
+    Class<?> appClass = WarehouseCrossdockServiceApplication.class;
+    SpringApplication.run(appClass, args);
+  }
 
-	public static void main(String[] args) {
-		SpringApplication.run(WarehouseCrossdockServiceApplication.class, args);
-	}
-
+  private WarehouseCrossdockServiceApplication() {
+    super();
+  }
 }

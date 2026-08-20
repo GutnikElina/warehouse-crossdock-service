@@ -8,12 +8,12 @@ on:
 
 jobs:
   run-shared-ci:
-    uses: MrKravz/shared-ci-workflows/.github/workflows/ci.yaml@main
+    uses: MrKravz/shared-ci-workflows/.github/workflows/ci.yaml@e96ef9c1350d67fb6a49eb7c1926dcda39fda7cb
     with:
       build-tool: 'maven'
       sonar-args: >
-        -Dsonar.projectKey=*
-        -Dsonar.organization=*
+        -Dsonar.projectKey=GutnikElina_warehouse-crossdock-service
+        -Dsonar.organization=gutnikelina
         -Dsonar.host.url=https://sonarcloud.io
         -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
         -Dsonar.coverage.exclusions=**/config/**,**/dto/**,**/model/**,**/exception/**,**/repository/**,**/mapper/**,**/*Application.java,**/util/**,**/client/**
