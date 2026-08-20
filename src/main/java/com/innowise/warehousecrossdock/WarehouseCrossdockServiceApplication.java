@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication(proxyBeanMethods = false)
-public class WarehouseCrossdockServiceApplication {
+public final class WarehouseCrossdockServiceApplication {
   /**
    * Main method to start the Spring Boot application.
    *
