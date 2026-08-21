@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
-import org.springframework.beans.factory.annotation.Value;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -22,12 +21,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Testcontainers
 class DistributedLockExecutorIntegrationTest {
-
-    @Value("${REDIS_IMAGE}")
-    private String redisImage;
-
-    @Value("${spring.data.redis.port}")
-    private String redisPort;
 
     @Container
     private static final GenericContainer<?> REDIS = new GenericContainer<>(DockerImageName.parse("redis:7.4-alpine"))
