@@ -3,8 +3,8 @@ spring:
     name: warehouse-crossdock-service
 
   datasource:
-    username: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
 
   flyway:
     enabled: true
