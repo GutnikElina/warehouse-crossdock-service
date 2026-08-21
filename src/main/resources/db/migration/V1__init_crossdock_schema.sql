@@ -25,7 +25,7 @@ CREATE TABLE gate_booking_slots (
                                     CONSTRAINT no_overlapping_slots EXCLUDE USING GIST (
                                         gate_id WITH =,
                                         booking_interval WITH &&
-                                    )
+                                    )WHERE (status <> 'CANCELLED')
 );
 
 CREATE INDEX idx_gate_booking_slots_gate_id ON gate_booking_slots(gate_id);
