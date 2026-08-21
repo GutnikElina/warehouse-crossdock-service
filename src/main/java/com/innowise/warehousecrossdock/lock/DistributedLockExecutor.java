@@ -31,7 +31,7 @@ public class DistributedLockExecutor {
             boolean acquired = lock.tryLock(waitTime, leaseTime, unit);
 
             if (!acquired) {
-                throw new GateSlotAlreadyLockedException(lockKey);
+                throw new GateSlotAlreadyLockedException();
             }
 
             return task.get();
@@ -40,7 +40,7 @@ public class DistributedLockExecutor {
 
             Thread.currentThread().interrupt();
 
-            throw new GateBookingInterruptedException(lockKey);
+            throw new GateBookingInterruptedException();
         } finally {
 
             if (lock.isHeldByCurrentThread()) {

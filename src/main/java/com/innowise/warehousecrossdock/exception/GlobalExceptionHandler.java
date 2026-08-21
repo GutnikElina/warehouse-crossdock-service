@@ -1,5 +1,7 @@
 package com.innowise.warehousecrossdock.exception;
 
+import com.innowise.warehousecrossdock.constant.ExceptionMessage;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -17,6 +19,20 @@ public class GlobalExceptionHandler {
 
         ErrorDetails exception = ErrorDetails.builder()
                 .message(e.getMessage())
+                .errorName(conflict.getReasonPhrase())
+                .httpStatus(conflict.value())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return  new ResponseEntity<>(exception, conflict);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorDetails> handleDataIntegrityViolation(DataIntegrityViolationException e) {
+        HttpStatus conflict = HttpStatus.CONFLICT;
+
+        ErrorDetails exception = ErrorDetails.builder()
+                .message(ExceptionMessage.DATA_INTEGRITY_VIOLATION_EXCEPTION)
                 .errorName(conflict.getReasonPhrase())
                 .httpStatus(conflict.value())
                 .timestamp(LocalDateTime.now())

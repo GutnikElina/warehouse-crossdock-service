@@ -4,7 +4,6 @@ import com.innowise.warehousecrossdock.lock.DistributedLockExecutor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.time.OffsetDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -15,13 +14,13 @@ public class GateLockFacade {
 
     private static final long DEFAULT_WAIT_TIME = 1L;
     private static final long DEFAULT_LEASE_TIME = 5L;
-    private static final String GATE_LOCK_PATTERN = "lock:gate:%s:%d";
+    private static final String GATE_LOCK_PATTERN = "lock:gate:%s";
 
     private final DistributedLockExecutor lockExecutor;
 
-    public <T> T executeWithGateLock(UUID gateId, OffsetDateTime start, Supplier<T> task) {
+    public <T> T executeWithGateLock(UUID gateId, Supplier<T> task) {
 
-        String lockKey = GATE_LOCK_PATTERN.formatted(gateId, start.toInstant().getEpochSecond());
+        String lockKey = GATE_LOCK_PATTERN.formatted(gateId);
 
         return lockExecutor.executeWithLock(
                 lockKey,
