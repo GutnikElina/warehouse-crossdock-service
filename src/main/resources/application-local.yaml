@@ -1,3 +1,8 @@
 spring:
   datasource:
     url: jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/${POSTGRES_DB:postgres}
+
+  data:
+    redis:
+      host: ${REDIS_LOCAL_HOST:localhost}
+      port: ${REDIS_PORT:6379}
