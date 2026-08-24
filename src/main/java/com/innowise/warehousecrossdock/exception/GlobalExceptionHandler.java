@@ -54,4 +54,46 @@ public class GlobalExceptionHandler {
 
         return  new ResponseEntity<>(exception, serverError);
     }
+
+    @ExceptionHandler(GateNotFoundException.class)
+    public ResponseEntity<ErrorDetails> handleGateNotFound(GateNotFoundException e) {
+        HttpStatus notFound = HttpStatus.NOT_FOUND;
+
+        ErrorDetails exception = ErrorDetails.builder()
+                .message(e.getMessage())
+                .errorName(notFound.getReasonPhrase())
+                .httpStatus(notFound.value())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return new ResponseEntity<>(exception, notFound);
+    }
+
+    @ExceptionHandler(SlotAlreadyBookedException.class)
+    public ResponseEntity<ErrorDetails> handleSlotAlreadyBooked(SlotAlreadyBookedException e) {
+        HttpStatus conflict = HttpStatus.CONFLICT;
+
+        ErrorDetails exception = ErrorDetails.builder()
+                .message(e.getMessage())
+                .errorName(conflict.getReasonPhrase())
+                .httpStatus(conflict.value())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return new ResponseEntity<>(exception, conflict);
+    }
+
+    @ExceptionHandler(IncompatibleGateException.class)
+    public ResponseEntity<ErrorDetails> handleIncompatibleGate(IncompatibleGateException e) {
+        HttpStatus unprocessable = HttpStatus.UNPROCESSABLE_ENTITY;
+
+        ErrorDetails exception = ErrorDetails.builder()
+                .message(e.getMessage())
+                .errorName(unprocessable.getReasonPhrase())
+                .httpStatus(unprocessable.value())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return new ResponseEntity<>(exception, unprocessable);
+    }
 }

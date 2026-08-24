@@ -12,4 +12,10 @@ public final class ExceptionMessage {
 
     public static final String DATA_INTEGRITY_VIOLATION_EXCEPTION =
             "The selected time interval overlaps with the existing booking.";
+
+    public static final String GATE_NOT_FOUND_EXCEPTION_MESSAGE =
+            "The requested gate was not found for the specified hub.";
+
+    public static final String GATE_INCOMPATIBLE_EXCEPTION_MESSAGE =
+            "The gate does not support the requested transport type or temperature mode.";
 }
