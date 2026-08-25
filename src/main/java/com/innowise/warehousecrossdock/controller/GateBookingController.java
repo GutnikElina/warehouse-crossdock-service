@@ -2,7 +2,7 @@ package com.innowise.warehousecrossdock.controller;
 
 import com.innowise.warehousecrossdock.dto.ReserveSlotRequest;
 import com.innowise.warehousecrossdock.dto.ReserveSlotResponse;
-import com.innowise.warehousecrossdock.service.GateBookingServiceImpl;
+import com.innowise.warehousecrossdock.service.impl.GateBookingServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

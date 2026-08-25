@@ -12,6 +12,7 @@ import com.innowise.warehousecrossdock.exception.IncompatibleGateException;
 import com.innowise.warehousecrossdock.exception.SlotAlreadyBookedException;
 import com.innowise.warehousecrossdock.repository.GateBookingSlotRepository;
 import com.innowise.warehousecrossdock.repository.GateRepository;
+import com.innowise.warehousecrossdock.service.impl.GateBookingTransactionalOps;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

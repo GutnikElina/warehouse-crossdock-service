@@ -6,6 +6,8 @@ import com.innowise.warehousecrossdock.model.TemperatureMode;
 import com.innowise.warehousecrossdock.model.TransportType;
 import com.innowise.warehousecrossdock.exception.GateSlotAlreadyLockedException;
 import com.innowise.warehousecrossdock.facade.GateLockFacade;
+import com.innowise.warehousecrossdock.service.impl.GateBookingServiceImpl;
+import com.innowise.warehousecrossdock.service.impl.GateBookingTransactionalOps;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;

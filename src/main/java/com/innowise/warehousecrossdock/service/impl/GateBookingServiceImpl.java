@@ -1,8 +1,9 @@
-package com.innowise.warehousecrossdock.service;
+package com.innowise.warehousecrossdock.service.impl;
 
 import com.innowise.warehousecrossdock.dto.ReserveSlotRequest;
 import com.innowise.warehousecrossdock.dto.ReserveSlotResponse;
 import com.innowise.warehousecrossdock.facade.GateLockFacade;
+import com.innowise.warehousecrossdock.service.GateBookingService;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +21,7 @@ public class GateBookingServiceImpl implements GateBookingService {
   private final GateBookingTransactionalOps transactionalOps;
   private final MeterRegistry meterRegistry;
 
-  @Override
-  public ReserveSlotResponse reserveSlot(UUID hubId, ReserveSlotRequest request) {
+  @Override  public ReserveSlotResponse reserveSlot(UUID hubId, ReserveSlotRequest request) {
     Timer.Sample sample = Timer.start(meterRegistry);
     try {
       return gateLockFacade.executeWithGateLock(

@@ -1,4 +1,4 @@
-package com.innowise.warehousecrossdock.service;
+package com.innowise.warehousecrossdock.service.impl;
 
 import com.innowise.warehousecrossdock.dto.ReserveSlotRequest;
 import com.innowise.warehousecrossdock.dto.ReserveSlotResponse;
@@ -11,8 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Component

@@ -16,6 +16,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Type;
 
+import com.innowise.warehousecrossdock.constant.ConfigValues;
+
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -48,7 +50,7 @@ public class GateBookingSlot {
   public static GateBookingSlot book(ReserveSlotRequest request) {
     Range<ZonedDateTime> interval = Range.closedOpen(
             request.startTime().toZonedDateTime(),
-            request.endTime().toZonedDateTime().plus(Duration.ofMinutes(15)));
+            request.endTime().toZonedDateTime().plus(ConfigValues.BUFFER_TIME));
     return new GateBookingSlot(null, request.gateId(), request.routeId(), GateBookingStatus.BOOKED, interval);
   }
 }
