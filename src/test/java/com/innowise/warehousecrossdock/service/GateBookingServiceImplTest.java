@@ -2,7 +2,8 @@ package com.innowise.warehousecrossdock.service;
 
 import com.innowise.warehousecrossdock.dto.ReserveSlotRequest;
 import com.innowise.warehousecrossdock.dto.ReserveSlotResponse;
-import com.innowise.warehousecrossdock.model.*;
+import com.innowise.warehousecrossdock.model.TemperatureMode;
+import com.innowise.warehousecrossdock.model.TransportType;
 import com.innowise.warehousecrossdock.exception.GateSlotAlreadyLockedException;
 import com.innowise.warehousecrossdock.facade.GateLockFacade;
 import io.micrometer.core.instrument.Clock;
@@ -27,7 +28,7 @@ import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
-class GateBookingServiceTest {
+class GateBookingServiceImplTest {
 
   @Mock
   GateLockFacade gateLockFacade;
@@ -35,7 +36,7 @@ class GateBookingServiceTest {
   GateBookingTransactionalOps transactionalOps;
 
   @InjectMocks
-  GateBookingService service;
+  GateBookingServiceImpl service;
 
   MeterRegistry meterRegistry = mock(MeterRegistry.class);
   MeterRegistry.Config config = mock(MeterRegistry.Config.class);

@@ -31,12 +31,8 @@ public class GateBookingTransactionalOps {
 
     validateCompatibility(gate, request);
 
-    ZonedDateTime bufferedStart = request.startTime().toZonedDateTime().minus(BOOKING_BUFFER);
-    ZonedDateTime bufferedEnd = request.endTime().toZonedDateTime().plus(BOOKING_BUFFER);
-
-
-    boolean overlapExists = slotRepository.existsOverlapping(
-            request.gateId(), bufferedStart, bufferedEnd);
+    var overlapExists = slotRepository.existsOverlapping(
+            request.gateId(), request.startTime().toZonedDateTime(), request.endTime().toZonedDateTime());
     if (overlapExists) {
       throw new SlotAlreadyBookedException();
     }

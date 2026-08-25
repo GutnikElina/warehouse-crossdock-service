@@ -2,7 +2,11 @@ package com.innowise.warehousecrossdock.service;
 
 import com.innowise.warehousecrossdock.dto.ReserveSlotRequest;
 import com.innowise.warehousecrossdock.dto.ReserveSlotResponse;
-import com.innowise.warehousecrossdock.model.*;
+import com.innowise.warehousecrossdock.model.TemperatureMode;
+import com.innowise.warehousecrossdock.model.TransportType;
+import com.innowise.warehousecrossdock.model.DockGate;
+import com.innowise.warehousecrossdock.model.GateBookingStatus;
+import com.innowise.warehousecrossdock.model.GateBookingSlot;
 import com.innowise.warehousecrossdock.exception.GateNotFoundException;
 import com.innowise.warehousecrossdock.exception.IncompatibleGateException;
 import com.innowise.warehousecrossdock.exception.SlotAlreadyBookedException;
@@ -58,7 +62,7 @@ class GateBookingTransactionalOpsTest {
     when(gateRepository.findByIdAndHubId(gateId, hubId))
             .thenReturn(Optional.of(compatibleGate));
     when(slotRepository.existsOverlapping(gateId,
-            request.startTime().toZonedDateTime().minus(BOOKING_BUFFER),
+            request.startTime().toZonedDateTime(),
             request.endTime().toZonedDateTime().plus(BOOKING_BUFFER)))
             .thenReturn(false);
 
@@ -99,7 +103,7 @@ class GateBookingTransactionalOpsTest {
     when(gateRepository.findByIdAndHubId(gateId, hubId))
             .thenReturn(Optional.of(compatibleGate));
     when(slotRepository.existsOverlapping(gateId,
-            request.startTime().toZonedDateTime().minus(BOOKING_BUFFER),
+            request.startTime().toZonedDateTime(),
             request.endTime().toZonedDateTime().plus(BOOKING_BUFFER)))
             .thenReturn(true);
 

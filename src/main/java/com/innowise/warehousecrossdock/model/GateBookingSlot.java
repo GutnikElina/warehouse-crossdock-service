@@ -3,13 +3,20 @@ package com.innowise.warehousecrossdock.model;
 import com.innowise.warehousecrossdock.dto.ReserveSlotRequest;
 import io.hypersistence.utils.hibernate.type.range.Range;
 import io.hypersistence.utils.hibernate.type.range.PostgreSQLRangeType;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Type;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -41,7 +48,7 @@ public class GateBookingSlot {
   public static GateBookingSlot book(ReserveSlotRequest request) {
     Range<ZonedDateTime> interval = Range.closedOpen(
             request.startTime().toZonedDateTime(),
-            request.endTime().toZonedDateTime());
+            request.endTime().toZonedDateTime().plus(Duration.ofMinutes(15)));
     return new GateBookingSlot(null, request.gateId(), request.routeId(), GateBookingStatus.BOOKED, interval);
   }
 }

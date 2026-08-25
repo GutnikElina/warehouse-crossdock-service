@@ -79,6 +79,29 @@ class GateBookingReservationIntegrationTest {
   }
 
   @Test
+  void returns201_afterFifteenMinuteGap() {
+    UUID hubId = gateTestDataFactory.seedHub();
+    UUID gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
+    UUID routeId = gateTestDataFactory.seedRoute();
+    ReserveSlotRequest first = gateTestDataFactory.requestFor(gateId, routeId,
+            "2026-09-01T11:00:00Z", "2026-09-01T11:45:00Z",
+            TransportType.TRUCK, TemperatureMode.DRY);
+    ReserveSlotRequest accepted = gateTestDataFactory.requestFor(gateId, routeId,
+            "2026-09-01T12:00:00Z", "2026-09-01T12:45:00Z",
+            TransportType.TRUCK, TemperatureMode.DRY);
+
+    restTemplate.postForEntity("/api/v1/hubs/{hubId}/slots/reserve",
+            first, ReserveSlotResponse.class, hubId);
+    ResponseEntity<ReserveSlotResponse> second = restTemplate.postForEntity(
+            "/api/v1/hubs/{hubId}/slots/reserve",
+            accepted, ReserveSlotResponse.class, hubId);
+
+    assertThat(second.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    assertThat(second.getBody().status()).isEqualTo(GateBookingStatus.BOOKED);
+  }
+
+
+  @Test
   void returns409_onSecondOverlappingReservation() {
     UUID hubId = gateTestDataFactory.seedHub();
     UUID gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
@@ -87,7 +110,7 @@ class GateBookingReservationIntegrationTest {
             "2026-09-01T11:00:00Z", "2026-09-01T11:45:00Z",
             TransportType.TRUCK, TemperatureMode.DRY);
     ReserveSlotRequest overlapping = gateTestDataFactory.requestFor(gateId, routeId,
-            "2026-09-01T11:30:00Z", "2026-09-01T12:15:00Z",
+            "2026-09-01T11:55:00Z", "2026-09-01T12:15:00Z",
             TransportType.TRUCK, TemperatureMode.DRY);
 
     restTemplate.postForEntity("/api/v1/hubs/{hubId}/slots/reserve",
@@ -97,6 +120,48 @@ class GateBookingReservationIntegrationTest {
             overlapping, ErrorDetails.class, hubId);
 
     assertThat(second.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+  }
+
+  @Test
+  void returns409_afterOnlyTenMinutesFromLastBooking() {
+    UUID hubId = gateTestDataFactory.seedHub();
+    UUID gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
+    UUID routeId = gateTestDataFactory.seedRoute();
+    ReserveSlotRequest first = gateTestDataFactory.requestFor(gateId, routeId,
+            "2026-09-01T11:00:00Z", "2026-09-01T11:45:00Z",
+            TransportType.TRUCK, TemperatureMode.DRY);
+    ReserveSlotRequest overlapping = gateTestDataFactory.requestFor(gateId, routeId,
+            "2026-09-01T11:45:00Z", "2026-09-01T12:15:00Z",
+            TransportType.TRUCK, TemperatureMode.DRY);
+
+    restTemplate.postForEntity("/api/v1/hubs/{hubId}/slots/reserve",
+            first, ReserveSlotResponse.class, hubId);
+    ResponseEntity<ErrorDetails> second = restTemplate.postForEntity(
+            "/api/v1/hubs/{hubId}/slots/reserve",
+            overlapping, ErrorDetails.class, hubId);
+
+    assertThat(second.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+  }
+
+  @Test
+  void returns409_TenMinutesBeforeNextBooking() {
+    UUID hubId = gateTestDataFactory.seedHub();
+    UUID gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
+    UUID routeId = gateTestDataFactory.seedRoute();
+    ReserveSlotRequest overlapping = gateTestDataFactory.requestFor(gateId, routeId,
+            "2026-09-01T11:05:00Z", "2026-09-01T11:50:00Z",
+            TransportType.TRUCK, TemperatureMode.DRY);
+    ReserveSlotRequest second = gateTestDataFactory.requestFor(gateId, routeId,
+            "2026-09-01T12:00:00Z", "2026-09-01T12:45:00Z",
+            TransportType.TRUCK, TemperatureMode.DRY);
+
+    restTemplate.postForEntity("/api/v1/hubs/{hubId}/slots/reserve",
+            second, ReserveSlotResponse.class, hubId);
+    ResponseEntity<ErrorDetails> first = restTemplate.postForEntity(
+            "/api/v1/hubs/{hubId}/slots/reserve",
+            overlapping, ErrorDetails.class, hubId);
+
+    assertThat(first.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
   }
 
   @Test
