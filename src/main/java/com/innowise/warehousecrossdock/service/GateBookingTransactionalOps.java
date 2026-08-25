@@ -22,8 +22,6 @@ public class GateBookingTransactionalOps {
   private final GateRepository gateRepository;
   private final GateBookingSlotRepository slotRepository;
 
-  private static final Duration BOOKING_BUFFER = Duration.ofMinutes(15);
-
   @Transactional
   public ReserveSlotResponse checkAndBook(UUID hubId, ReserveSlotRequest request) {
 
