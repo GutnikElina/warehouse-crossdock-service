@@ -32,7 +32,7 @@ public class DockGate {
   private TransportType transportType;
 
   public boolean supports(TransportType type) {
-    return transportType.ordinal() == type.ordinal();
+    return transportType == type;
   }
 
   public boolean matchesTemperature(TemperatureMode required) {

@@ -18,4 +18,5 @@ public final class ExceptionMessage {
 
     public static final String GATE_INCOMPATIBLE_EXCEPTION_MESSAGE =
             "The gate does not support the requested transport type or temperature mode.";
+
 }

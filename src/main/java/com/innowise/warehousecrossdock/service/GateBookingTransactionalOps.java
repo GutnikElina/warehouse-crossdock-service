@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Component
@@ -20,6 +22,8 @@ public class GateBookingTransactionalOps {
   private final GateRepository gateRepository;
   private final GateBookingSlotRepository slotRepository;
 
+  private static final Duration BOOKING_BUFFER = Duration.ofMinutes(15);
+
   @Transactional
   public ReserveSlotResponse checkAndBook(UUID hubId, ReserveSlotRequest request) {
 
@@ -27,8 +31,12 @@ public class GateBookingTransactionalOps {
 
     validateCompatibility(gate, request);
 
+    ZonedDateTime bufferedStart = request.startTime().toZonedDateTime().minus(BOOKING_BUFFER);
+    ZonedDateTime bufferedEnd = request.endTime().toZonedDateTime().plus(BOOKING_BUFFER);
+
+
     boolean overlapExists = slotRepository.existsOverlapping(
-            request.gateId(), request.startTime().toZonedDateTime(), request.endTime().toZonedDateTime());
+            request.gateId(), bufferedStart, bufferedEnd);
     if (overlapExists) {
       throw new SlotAlreadyBookedException();
     }

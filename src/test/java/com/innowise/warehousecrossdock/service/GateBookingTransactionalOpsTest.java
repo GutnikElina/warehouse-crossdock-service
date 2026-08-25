@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,6 +41,8 @@ class GateBookingTransactionalOpsTest {
   private ReserveSlotRequest request;
   private DockGate compatibleGate;
 
+  private static final Duration BOOKING_BUFFER = Duration.ofMinutes(15);
+
   @BeforeEach
   void setUp() {
     request = new ReserveSlotRequest(gateId, UUID.randomUUID(),
@@ -55,7 +58,9 @@ class GateBookingTransactionalOpsTest {
     when(gateRepository.findByIdAndHubId(gateId, hubId))
             .thenReturn(Optional.of(compatibleGate));
     when(slotRepository.existsOverlapping(gateId,
-            request.startTime().toZonedDateTime(), request.endTime().toZonedDateTime())).thenReturn(false);
+            request.startTime().toZonedDateTime().minus(BOOKING_BUFFER),
+            request.endTime().toZonedDateTime().plus(BOOKING_BUFFER)))
+            .thenReturn(false);
 
     ReserveSlotResponse response = ops.checkAndBook(hubId, request);
 
@@ -94,7 +99,9 @@ class GateBookingTransactionalOpsTest {
     when(gateRepository.findByIdAndHubId(gateId, hubId))
             .thenReturn(Optional.of(compatibleGate));
     when(slotRepository.existsOverlapping(gateId,
-            request.startTime().toZonedDateTime(), request.endTime().toZonedDateTime())).thenReturn(true);
+            request.startTime().toZonedDateTime().minus(BOOKING_BUFFER),
+            request.endTime().toZonedDateTime().plus(BOOKING_BUFFER)))
+            .thenReturn(true);
 
     assertThatThrownBy(() -> ops.checkAndBook(hubId, request))
             .isInstanceOf(SlotAlreadyBookedException.class);
