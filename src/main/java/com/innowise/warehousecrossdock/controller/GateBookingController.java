@@ -2,12 +2,16 @@ package com.innowise.warehousecrossdock.controller;
 
 import com.innowise.warehousecrossdock.dto.ReserveSlotRequest;
 import com.innowise.warehousecrossdock.dto.ReserveSlotResponse;
-import com.innowise.warehousecrossdock.service.impl.GateBookingServiceImpl;
+import com.innowise.warehousecrossdock.service.GateBookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.UUID;
 
@@ -16,7 +20,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GateBookingController {
 
-  private final GateBookingServiceImpl gateBookingServiceImpl;
+  private final GateBookingService gateBookingServiceImpl;
 
   @PostMapping("/{hubId}/slots/reserve")
   public ResponseEntity<ReserveSlotResponse> reserveSlot(
