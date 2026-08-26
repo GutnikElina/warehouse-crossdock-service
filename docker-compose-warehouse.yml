@@ -1,0 +1,4 @@
+networks:
+  default:
+    name: infra-net
+    external: true
