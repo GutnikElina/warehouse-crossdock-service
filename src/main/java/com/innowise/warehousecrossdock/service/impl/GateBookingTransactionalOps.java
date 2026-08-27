@@ -2,17 +2,16 @@ package com.innowise.warehousecrossdock.service.impl;
 
 import com.innowise.warehousecrossdock.dto.ReserveSlotRequest;
 import com.innowise.warehousecrossdock.dto.ReserveSlotResponse;
+import com.innowise.warehousecrossdock.exception.*;
 import com.innowise.warehousecrossdock.model.DockGate;
 import com.innowise.warehousecrossdock.model.GateBookingSlot;
-import com.innowise.warehousecrossdock.exception.*;
 import com.innowise.warehousecrossdock.repository.GateBookingSlotRepository;
 import com.innowise.warehousecrossdock.repository.GateRepository;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -24,17 +23,21 @@ public class GateBookingTransactionalOps {
   @Transactional
   public ReserveSlotResponse checkAndBook(UUID hubId, ReserveSlotRequest request) {
 
-    DockGate gate = gateRepository.findByIdAndHubId(request.gateId(), hubId).orElseThrow(GateNotFoundException::new);
+    DockGate gate =
+        gateRepository
+            .findByIdAndHubId(request.gateId(), hubId)
+            .orElseThrow(GateNotFoundException::new);
 
     validateCompatibility(gate, request);
 
-    Optional.of(slotRepository.existsOverlapping(
-            request.gateId(),
-            request.startTime().toZonedDateTime(),
-            request.endTime().toZonedDateTime()))
-            .filter(Boolean::booleanValue)
-            .ifPresent(overlap ->
-            {
+    Optional.of(
+            slotRepository.existsOverlapping(
+                request.gateId(),
+                request.startTime().toZonedDateTime(),
+                request.endTime().toZonedDateTime()))
+        .filter(Boolean::booleanValue)
+        .ifPresent(
+            overlap -> {
               throw new SlotAlreadyBookedException();
             });
 
@@ -53,6 +56,4 @@ public class GateBookingTransactionalOps {
       throw new IncompatibleGateException();
     }
   }
-
 }
-

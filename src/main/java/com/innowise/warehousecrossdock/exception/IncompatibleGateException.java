@@ -7,4 +7,3 @@ public class IncompatibleGateException extends RuntimeException {
     super(GATE_INCOMPATIBLE_EXCEPTION_MESSAGE);
   }
 }
-

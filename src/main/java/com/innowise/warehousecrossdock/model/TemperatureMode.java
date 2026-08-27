@@ -1,7 +1,9 @@
 package com.innowise.warehousecrossdock.model;
 
 public enum TemperatureMode {
-  DRY(0), CHILLED(1), FROZEN(2);
+  DRY(0),
+  CHILLED(1),
+  FROZEN(2);
 
   private final int level;
 
@@ -13,4 +15,3 @@ public enum TemperatureMode {
     return this.level >= required.level;
   }
 }
-

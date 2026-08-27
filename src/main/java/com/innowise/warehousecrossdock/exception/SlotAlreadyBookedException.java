@@ -7,4 +7,3 @@ public class SlotAlreadyBookedException extends RuntimeException {
     super(DATA_INTEGRITY_VIOLATION_EXCEPTION);
   }
 }
-

@@ -7,4 +7,3 @@ public class GateNotFoundException extends RuntimeException {
     super(GATE_NOT_FOUND_EXCEPTION_MESSAGE);
   }
 }
-

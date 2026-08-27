@@ -2,15 +2,14 @@ package com.innowise.warehousecrossdock.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.UUID;
 
 @Entity
 @Table(name = "dock_gates")
@@ -19,8 +18,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class DockGate {
 
-  @Id
-  private UUID id;
+  @Id private UUID id;
 
   @Column(name = "hub_id", nullable = false)
   private UUID hubId;
@@ -43,5 +41,4 @@ public class DockGate {
   public boolean matchesTemperature(TemperatureMode required) {
     return temperatureMode.supports(required);
   }
-
 }

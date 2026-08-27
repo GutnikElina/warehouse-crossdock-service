@@ -6,10 +6,9 @@ import com.innowise.warehousecrossdock.facade.GateLockFacade;
 import com.innowise.warehousecrossdock.service.GateBookingService;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,11 +25,9 @@ public class GateBookingServiceImpl implements GateBookingService {
     var sample = Timer.start(meterRegistry);
     try {
       return gateLockFacade.executeWithGateLock(
-              request.gateId(),
-              () -> transactionalOps.checkAndBook(hubId, request));
+          request.gateId(), () -> transactionalOps.checkAndBook(hubId, request));
     } finally {
       sample.stop(meterRegistry.timer(RESERVATION_TIMER_NAME));
     }
   }
 }
-
