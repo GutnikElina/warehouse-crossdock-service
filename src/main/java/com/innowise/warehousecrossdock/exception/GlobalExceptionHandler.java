@@ -1,7 +1,8 @@
 package com.innowise.warehousecrossdock.exception;
 
 import com.innowise.warehousecrossdock.constant.ExceptionMessage;
-import java.time.LocalDateTime;
+
+import java.time.Instant;
 import java.util.stream.Collectors;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -22,7 +23,7 @@ public class GlobalExceptionHandler {
             .message(e.getMessage())
             .errorName(conflict.getReasonPhrase())
             .httpStatus(conflict.value())
-            .timestamp(LocalDateTime.now())
+            .timestamp(Instant.now())
             .build();
 
     return new ResponseEntity<>(exception, conflict);
@@ -38,7 +39,7 @@ public class GlobalExceptionHandler {
             .message(ExceptionMessage.DATA_INTEGRITY_VIOLATION_EXCEPTION)
             .errorName(conflict.getReasonPhrase())
             .httpStatus(conflict.value())
-            .timestamp(LocalDateTime.now())
+            .timestamp(Instant.now())
             .build();
 
     return new ResponseEntity<>(exception, conflict);
@@ -53,7 +54,7 @@ public class GlobalExceptionHandler {
             .message(e.getMessage())
             .errorName(serverError.getReasonPhrase())
             .httpStatus(serverError.value())
-            .timestamp(LocalDateTime.now())
+            .timestamp(Instant.now())
             .build();
 
     return new ResponseEntity<>(exception, serverError);
@@ -68,7 +69,7 @@ public class GlobalExceptionHandler {
             .message(e.getMessage())
             .errorName(notFound.getReasonPhrase())
             .httpStatus(notFound.value())
-            .timestamp(LocalDateTime.now())
+            .timestamp(Instant.now())
             .build();
 
     return new ResponseEntity<>(exception, notFound);
@@ -83,7 +84,7 @@ public class GlobalExceptionHandler {
             .message(e.getMessage())
             .errorName(conflict.getReasonPhrase())
             .httpStatus(conflict.value())
-            .timestamp(LocalDateTime.now())
+            .timestamp(Instant.now())
             .build();
 
     return new ResponseEntity<>(exception, conflict);
@@ -98,7 +99,7 @@ public class GlobalExceptionHandler {
             .message(e.getMessage())
             .errorName(unprocessable.getReasonPhrase())
             .httpStatus(unprocessable.value())
-            .timestamp(LocalDateTime.now())
+            .timestamp(Instant.now())
             .build();
 
     return new ResponseEntity<>(exception, unprocessable);
@@ -120,7 +121,7 @@ public class GlobalExceptionHandler {
             .message(message)
             .errorName(badRequest.getReasonPhrase())
             .httpStatus(badRequest.value())
-            .timestamp(LocalDateTime.now())
+            .timestamp(Instant.now())
             .build();
 
     return new ResponseEntity<>(exception, badRequest);

@@ -82,9 +82,9 @@ class GateBookingReservationIntegrationTest {
 
   @Test
   void returns201_afterFifteenMinuteGap() {
-    UUID hubId = gateTestDataFactory.seedHub();
-    UUID gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
-    UUID routeId = gateTestDataFactory.seedRoute();
+    hubId = gateTestDataFactory.seedHub();
+    gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
+    routeId = gateTestDataFactory.seedRoute();
     ReserveSlotRequest first =
         gateTestDataFactory.requestFor(
             gateId,
@@ -114,9 +114,9 @@ class GateBookingReservationIntegrationTest {
 
   @Test
   void returns409_onSecondOverlappingReservation() {
-    UUID hubId = gateTestDataFactory.seedHub();
-    UUID gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
-    UUID routeId = gateTestDataFactory.seedRoute();
+    hubId = gateTestDataFactory.seedHub();
+    gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
+    routeId = gateTestDataFactory.seedRoute();
     ReserveSlotRequest first =
         gateTestDataFactory.requestFor(
             gateId,
@@ -145,9 +145,9 @@ class GateBookingReservationIntegrationTest {
 
   @Test
   void returns409_afterOnlyTenMinutesFromLastBooking() {
-    UUID hubId = gateTestDataFactory.seedHub();
-    UUID gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
-    UUID routeId = gateTestDataFactory.seedRoute();
+    hubId = gateTestDataFactory.seedHub();
+    gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
+    routeId = gateTestDataFactory.seedRoute();
     ReserveSlotRequest first =
         gateTestDataFactory.requestFor(
             gateId,
@@ -176,9 +176,9 @@ class GateBookingReservationIntegrationTest {
 
   @Test
   void returns409_TenMinutesBeforeNextBooking() {
-    UUID hubId = gateTestDataFactory.seedHub();
-    UUID gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
-    UUID routeId = gateTestDataFactory.seedRoute();
+    hubId = gateTestDataFactory.seedHub();
+    gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
+    routeId = gateTestDataFactory.seedRoute();
     ReserveSlotRequest overlapping =
         gateTestDataFactory.requestFor(
             gateId,
@@ -207,7 +207,7 @@ class GateBookingReservationIntegrationTest {
 
   @Test
   void returns404_whenGateDoesNotBelongToHub() {
-    UUID hubId = gateTestDataFactory.seedHub();
+    hubId = gateTestDataFactory.seedHub();
     UUID otherHubsGateId =
         gateTestDataFactory.seedGate(
             gateTestDataFactory.seedHub(), TemperatureMode.DRY, TransportType.TRUCK);
@@ -230,7 +230,7 @@ class GateBookingReservationIntegrationTest {
 
   @Test
   void returns422_whenGateCannotHandleFrozenCargo() {
-    UUID hubId = gateTestDataFactory.seedHub();
+    hubId = gateTestDataFactory.seedHub();
     UUID dryGateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
 
     ReserveSlotRequest frozenCargoRequest =
@@ -251,9 +251,9 @@ class GateBookingReservationIntegrationTest {
 
   @Test
   void exactlyOneRequestSucceeds_underConcurrentDoubleBooking() throws Exception {
-    UUID hubId = gateTestDataFactory.seedHub();
-    UUID gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
-    UUID routeId = gateTestDataFactory.seedRoute();
+    hubId = gateTestDataFactory.seedHub();
+    gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
+    routeId = gateTestDataFactory.seedRoute();
     ReserveSlotRequest request =
         gateTestDataFactory.requestFor(
             gateId,

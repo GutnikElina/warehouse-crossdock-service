@@ -30,14 +30,23 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class GateBookingServiceImplTest {
 
-  @Mock GateLockFacade gateLockFacade;
-  @Mock GateBookingTransactionalOps transactionalOps;
+  @Mock
+  GateLockFacade gateLockFacade;
 
-  @InjectMocks GateBookingServiceImpl service;
+  @Mock
+  GateBookingTransactionalOps transactionalOps;
 
-  MeterRegistry meterRegistry = mock(MeterRegistry.class);
-  MeterRegistry.Config config = mock(MeterRegistry.Config.class);
-  Clock clock = mock(Clock.class);
+  @InjectMocks
+  GateBookingServiceImpl service;
+
+  @Mock
+  MeterRegistry meterRegistry;
+
+  @Mock
+  MeterRegistry.Config config;
+
+  @Mock
+  Clock clock;
 
   private final UUID hubId = UUID.randomUUID();
   private ReserveSlotRequest request;
@@ -52,7 +61,8 @@ class GateBookingServiceImplTest {
             OffsetDateTime.now().plusMinutes(45),
             TransportType.TRUCK,
             TemperatureMode.DRY);
-    when(meterRegistry.timer(anyString())).thenReturn(mock(Timer.class));
+    Timer timerMock = mock(Timer.class);
+    when(meterRegistry.timer(anyString())).thenReturn(timerMock);
     when(meterRegistry.config()).thenReturn(config);
     when(config.clock()).thenReturn(clock);
   }

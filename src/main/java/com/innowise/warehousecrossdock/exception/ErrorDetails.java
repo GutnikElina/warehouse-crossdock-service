@@ -1,6 +1,6 @@
 package com.innowise.warehousecrossdock.exception;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -14,5 +14,5 @@ public class ErrorDetails {
 
   private final int httpStatus;
 
-  private final LocalDateTime timestamp;
+  private final Instant timestamp;
 }

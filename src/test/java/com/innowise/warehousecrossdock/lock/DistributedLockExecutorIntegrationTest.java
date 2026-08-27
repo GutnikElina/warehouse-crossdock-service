@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.innowise.warehousecrossdock.exception.GateSlotAlreadyLockedException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
@@ -46,40 +47,45 @@ class DistributedLockExecutorIntegrationTest {
     }
   }
 
-  @Test
-  void shouldThrowExceptionWhenSecondThreadTriesToAcquireSameLock() throws Exception {
-    String lockKey = "gate-slot-101";
+    @Test
+    void shouldThrowExceptionWhenSecondThreadTriesToAcquireSameLock() throws Exception {
+        String lockKey = "gate-slot-101";
 
-    CompletableFuture<Void> threadA =
-        CompletableFuture.runAsync(
-            () ->
-                executor.executeWithLock(
-                    lockKey,
-                    100,
-                    2000,
-                    TimeUnit.MILLISECONDS,
-                    () -> {
-                      try {
-                        Thread.sleep(500);
-                      } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                      }
-                      return "Thread A done";
-                    }));
+        CountDownLatch lockAcquiredByA = new CountDownLatch(1);
+        CountDownLatch allowAToFinish = new CountDownLatch(1);
 
-    Thread.sleep(50);
+        CompletableFuture<Void> threadA =
+                CompletableFuture.runAsync(
+                        () ->
+                                executor.executeWithLock(
+                                        lockKey,
+                                        100,
+                                        2000,
+                                        TimeUnit.MILLISECONDS,
+                                        () -> {
+                                            lockAcquiredByA.countDown();
+                                            try {
+                                                allowAToFinish.await();
+                                            } catch (InterruptedException e) {
+                                                Thread.currentThread().interrupt();
+                                            }
+                                            return "Thread A done";
+                                        }));
 
-    CompletableFuture<Void> threadB =
-        CompletableFuture.runAsync(
-            () ->
-                executor.executeWithLock(
-                    lockKey, 100, 2000, TimeUnit.MILLISECONDS, () -> "Thread B done"));
+        lockAcquiredByA.await();
 
-    ExecutionException exception = assertThrows(ExecutionException.class, threadB::get);
-    assertThat(exception.getCause()).isInstanceOf(GateSlotAlreadyLockedException.class);
+        CompletableFuture<Void> threadB =
+                CompletableFuture.runAsync(
+                        () ->
+                                executor.executeWithLock(
+                                        lockKey, 100, 2000, TimeUnit.MILLISECONDS, () -> "Thread B done"));
 
-    threadA.get();
-  }
+        ExecutionException exception = assertThrows(ExecutionException.class, threadB::get);
+        assertThat(exception.getCause()).isInstanceOf(GateSlotAlreadyLockedException.class);
+
+        allowAToFinish.countDown();
+        threadA.get();
+    }
 
   @Test
   void shouldAllowSecondThreadToAcquireLockAfterFirstReleasesIt() {

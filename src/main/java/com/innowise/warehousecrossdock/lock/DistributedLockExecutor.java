@@ -20,26 +20,26 @@ public class DistributedLockExecutor {
 
     RLock lock = redissonClient.getLock(lockKey);
 
-    try {
+    boolean acquired;
 
-      boolean acquired = lock.tryLock(waitTime, leaseTime, unit);
+    try {
+      acquired = lock.tryLock(waitTime, leaseTime, unit);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new GateBookingInterruptedException();
+    }
 
       if (!acquired) {
-        throw new GateSlotAlreadyLockedException();
+          throw new GateSlotAlreadyLockedException();
       }
 
-      return task.get();
-
-    } catch (InterruptedException e) {
-
-      Thread.currentThread().interrupt();
-
-      throw new GateBookingInterruptedException();
-    } finally {
-
-      if (lock.isHeldByCurrentThread()) {
-        lock.unlock();
+      try{
+          return task.get();
+      } finally {
+          if (lock.isHeldByCurrentThread()) {
+              lock.unlock();
+          }
       }
-    }
+
   }
 }
