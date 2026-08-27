@@ -21,8 +21,9 @@ public class GateBookingServiceImpl implements GateBookingService {
   private final GateBookingTransactionalOps transactionalOps;
   private final MeterRegistry meterRegistry;
 
-  @Override  public ReserveSlotResponse reserveSlot(UUID hubId, ReserveSlotRequest request) {
-    Timer.Sample sample = Timer.start(meterRegistry);
+  @Override
+  public ReserveSlotResponse reserveSlot(UUID hubId, ReserveSlotRequest request) {
+    var sample = Timer.start(meterRegistry);
     try {
       return gateLockFacade.executeWithGateLock(
               request.gateId(),

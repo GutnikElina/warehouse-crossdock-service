@@ -46,8 +46,6 @@ class GateBookingTransactionalOpsTest {
   private ReserveSlotRequest request;
   private DockGate compatibleGate;
 
-  private static final Duration BOOKING_BUFFER = Duration.ofMinutes(15);
-
   @BeforeEach
   void setUp() {
     request = new ReserveSlotRequest(gateId, UUID.randomUUID(),
@@ -64,7 +62,7 @@ class GateBookingTransactionalOpsTest {
             .thenReturn(Optional.of(compatibleGate));
     when(slotRepository.existsOverlapping(gateId,
             request.startTime().toZonedDateTime(),
-            request.endTime().toZonedDateTime().plus(BOOKING_BUFFER)))
+            request.endTime().toZonedDateTime()))
             .thenReturn(false);
 
     ReserveSlotResponse response = ops.checkAndBook(hubId, request);
@@ -105,7 +103,7 @@ class GateBookingTransactionalOpsTest {
             .thenReturn(Optional.of(compatibleGate));
     when(slotRepository.existsOverlapping(gateId,
             request.startTime().toZonedDateTime(),
-            request.endTime().toZonedDateTime().plus(BOOKING_BUFFER)))
+            request.endTime().toZonedDateTime()))
             .thenReturn(true);
 
     assertThatThrownBy(() -> ops.checkAndBook(hubId, request))

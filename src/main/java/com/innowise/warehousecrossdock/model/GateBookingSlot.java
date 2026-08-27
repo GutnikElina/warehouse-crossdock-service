@@ -50,7 +50,7 @@ public class GateBookingSlot {
   public static GateBookingSlot book(ReserveSlotRequest request) {
     Range<ZonedDateTime> interval = Range.closedOpen(
             request.startTime().toZonedDateTime(),
-            request.endTime().toZonedDateTime().plus(ConfigValues.BUFFER_TIME));
+            request.endTime().toZonedDateTime().plus(ConfigValues.SLOT_BOOKING_INTERVAL));
     return new GateBookingSlot(null, request.gateId(), request.routeId(), GateBookingStatus.BOOKED, interval);
   }
 }

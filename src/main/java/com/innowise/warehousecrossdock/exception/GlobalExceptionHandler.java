@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorDetails> handleLocked(GateSlotAlreadyLockedException e) {
         HttpStatus conflict = HttpStatus.CONFLICT;
 
-        ErrorDetails exception = ErrorDetails.builder()
+        var exception = ErrorDetails.builder()
                 .message(e.getMessage())
                 .errorName(conflict.getReasonPhrase())
                 .httpStatus(conflict.value())
@@ -33,7 +33,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorDetails> handleDataIntegrityViolation(DataIntegrityViolationException e) {
         HttpStatus conflict = HttpStatus.CONFLICT;
 
-        ErrorDetails exception = ErrorDetails.builder()
+        var exception = ErrorDetails.builder()
                 .message(ExceptionMessage.DATA_INTEGRITY_VIOLATION_EXCEPTION)
                 .errorName(conflict.getReasonPhrase())
                 .httpStatus(conflict.value())
@@ -47,7 +47,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorDetails> handleInterrupt(GateBookingInterruptedException e) {
         HttpStatus serverError = HttpStatus.INTERNAL_SERVER_ERROR;
 
-        ErrorDetails exception = ErrorDetails.builder()
+        var exception = ErrorDetails.builder()
                 .message(e.getMessage())
                 .errorName(serverError.getReasonPhrase())
                 .httpStatus(serverError.value())
@@ -61,7 +61,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorDetails> handleGateNotFound(GateNotFoundException e) {
         HttpStatus notFound = HttpStatus.NOT_FOUND;
 
-        ErrorDetails exception = ErrorDetails.builder()
+        var exception = ErrorDetails.builder()
                 .message(e.getMessage())
                 .errorName(notFound.getReasonPhrase())
                 .httpStatus(notFound.value())
@@ -75,7 +75,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorDetails> handleSlotAlreadyBooked(SlotAlreadyBookedException e) {
         HttpStatus conflict = HttpStatus.CONFLICT;
 
-        ErrorDetails exception = ErrorDetails.builder()
+        var exception = ErrorDetails.builder()
                 .message(e.getMessage())
                 .errorName(conflict.getReasonPhrase())
                 .httpStatus(conflict.value())
@@ -89,7 +89,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorDetails> handleIncompatibleGate(IncompatibleGateException e) {
         HttpStatus unprocessable = HttpStatus.UNPROCESSABLE_ENTITY;
 
-        ErrorDetails exception = ErrorDetails.builder()
+        var exception = ErrorDetails.builder()
                 .message(e.getMessage())
                 .errorName(unprocessable.getReasonPhrase())
                 .httpStatus(unprocessable.value())
@@ -104,11 +104,11 @@ public class GlobalExceptionHandler {
 
             HttpStatus badRequest = HttpStatus.BAD_REQUEST;
 
-            String message = e.getBindingResult().getFieldErrors().stream()
+            var message = e.getBindingResult().getFieldErrors().stream()
                 .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
                 .collect(Collectors.joining("; "));
 
-            ErrorDetails exception = ErrorDetails.builder()
+            var exception = ErrorDetails.builder()
                     .message(message)
                     .errorName(badRequest.getReasonPhrase())
                     .httpStatus(badRequest.value())
@@ -116,7 +116,6 @@ public class GlobalExceptionHandler {
                     .build();
 
             return new ResponseEntity<>(exception, badRequest);
-
 
     }
 }
