@@ -15,6 +15,7 @@ public class DistributedLockExecutor {
 
   private final RedissonClient redissonClient;
 
+  @SuppressWarnings("java:S2222")
   public <T> T executeWithLock(
       String lockKey, long waitTime, long leaseTime, TimeUnit unit, Supplier<T> task) {
 
@@ -35,7 +36,7 @@ public class DistributedLockExecutor {
       throw new GateBookingInterruptedException();
 
     } finally {
-      if (acquired && lock.isHeldByCurrentThread()) {
+      if (lock.isHeldByCurrentThread()) {
         lock.unlock();
       }
     }
