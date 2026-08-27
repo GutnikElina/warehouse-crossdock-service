@@ -19,24 +19,23 @@ public class DistributedLockExecutor {
       String lockKey, long waitTime, long leaseTime, TimeUnit unit, Supplier<T> task) {
 
     RLock lock = redissonClient.getLock(lockKey);
-
-    boolean acquired;
+    boolean acquired = false;
 
     try {
       acquired = lock.tryLock(waitTime, leaseTime, unit);
+
+      if (!acquired) {
+        throw new GateSlotAlreadyLockedException();
+      }
+
+      return task.get();
+
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new GateBookingInterruptedException();
-    }
 
-    if (!acquired) {
-      throw new GateSlotAlreadyLockedException();
-    }
-
-    try {
-      return task.get();
     } finally {
-      if (lock.isHeldByCurrentThread()) {
+      if (acquired && lock.isHeldByCurrentThread()) {
         lock.unlock();
       }
     }

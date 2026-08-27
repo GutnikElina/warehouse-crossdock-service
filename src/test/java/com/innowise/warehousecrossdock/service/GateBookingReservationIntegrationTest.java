@@ -211,7 +211,7 @@ class GateBookingReservationIntegrationTest {
     UUID otherHubsGateId =
         gateTestDataFactory.seedGate(
             gateTestDataFactory.seedHub(), TemperatureMode.DRY, TransportType.TRUCK);
-    UUID routeId = gateTestDataFactory.seedRoute();
+    routeId = gateTestDataFactory.seedRoute();
     ReserveSlotRequest request =
         gateTestDataFactory.requestFor(
             otherHubsGateId,

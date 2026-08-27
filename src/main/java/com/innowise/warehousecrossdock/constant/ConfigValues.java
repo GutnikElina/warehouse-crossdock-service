@@ -6,5 +6,4 @@ public final class ConfigValues {
   public static final Duration SLOT_BOOKING_INTERVAL = Duration.ofMinutes(15);
 
   private ConfigValues() {}
-  ;
 }
