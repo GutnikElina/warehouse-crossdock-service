@@ -47,45 +47,45 @@ class DistributedLockExecutorIntegrationTest {
     }
   }
 
-    @Test
-    void shouldThrowExceptionWhenSecondThreadTriesToAcquireSameLock() throws Exception {
-        String lockKey = "gate-slot-101";
+  @Test
+  void shouldThrowExceptionWhenSecondThreadTriesToAcquireSameLock() throws Exception {
+    String lockKey = "gate-slot-101";
 
-        CountDownLatch lockAcquiredByA = new CountDownLatch(1);
-        CountDownLatch allowAToFinish = new CountDownLatch(1);
+    CountDownLatch lockAcquiredByA = new CountDownLatch(1);
+    CountDownLatch allowAToFinish = new CountDownLatch(1);
 
-        CompletableFuture<Void> threadA =
-                CompletableFuture.runAsync(
-                        () ->
-                                executor.executeWithLock(
-                                        lockKey,
-                                        100,
-                                        2000,
-                                        TimeUnit.MILLISECONDS,
-                                        () -> {
-                                            lockAcquiredByA.countDown();
-                                            try {
-                                                allowAToFinish.await();
-                                            } catch (InterruptedException e) {
-                                                Thread.currentThread().interrupt();
-                                            }
-                                            return "Thread A done";
-                                        }));
+    CompletableFuture<Void> threadA =
+        CompletableFuture.runAsync(
+            () ->
+                executor.executeWithLock(
+                    lockKey,
+                    100,
+                    2000,
+                    TimeUnit.MILLISECONDS,
+                    () -> {
+                      lockAcquiredByA.countDown();
+                      try {
+                        allowAToFinish.await();
+                      } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                      }
+                      return "Thread A done";
+                    }));
 
-        lockAcquiredByA.await();
+    lockAcquiredByA.await();
 
-        CompletableFuture<Void> threadB =
-                CompletableFuture.runAsync(
-                        () ->
-                                executor.executeWithLock(
-                                        lockKey, 100, 2000, TimeUnit.MILLISECONDS, () -> "Thread B done"));
+    CompletableFuture<Void> threadB =
+        CompletableFuture.runAsync(
+            () ->
+                executor.executeWithLock(
+                    lockKey, 100, 2000, TimeUnit.MILLISECONDS, () -> "Thread B done"));
 
-        ExecutionException exception = assertThrows(ExecutionException.class, threadB::get);
-        assertThat(exception.getCause()).isInstanceOf(GateSlotAlreadyLockedException.class);
+    ExecutionException exception = assertThrows(ExecutionException.class, threadB::get);
+    assertThat(exception.getCause()).isInstanceOf(GateSlotAlreadyLockedException.class);
 
-        allowAToFinish.countDown();
-        threadA.get();
-    }
+    allowAToFinish.countDown();
+    threadA.get();
+  }
 
   @Test
   void shouldAllowSecondThreadToAcquireLockAfterFirstReleasesIt() {

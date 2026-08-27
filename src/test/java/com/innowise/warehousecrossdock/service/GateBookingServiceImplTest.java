@@ -30,23 +30,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class GateBookingServiceImplTest {
 
-  @Mock
-  GateLockFacade gateLockFacade;
+  @Mock GateLockFacade gateLockFacade;
 
-  @Mock
-  GateBookingTransactionalOps transactionalOps;
+  @Mock GateBookingTransactionalOps transactionalOps;
 
-  @InjectMocks
-  GateBookingServiceImpl service;
+  @InjectMocks GateBookingServiceImpl service;
 
-  @Mock
-  MeterRegistry meterRegistry;
+  @Mock MeterRegistry meterRegistry;
 
-  @Mock
-  MeterRegistry.Config config;
+  @Mock MeterRegistry.Config config;
 
-  @Mock
-  Clock clock;
+  @Mock Clock clock;
 
   private final UUID hubId = UUID.randomUUID();
   private ReserveSlotRequest request;

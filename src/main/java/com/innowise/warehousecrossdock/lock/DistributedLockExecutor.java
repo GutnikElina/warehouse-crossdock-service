@@ -29,17 +29,16 @@ public class DistributedLockExecutor {
       throw new GateBookingInterruptedException();
     }
 
-      if (!acquired) {
-          throw new GateSlotAlreadyLockedException();
-      }
+    if (!acquired) {
+      throw new GateSlotAlreadyLockedException();
+    }
 
-      try{
-          return task.get();
-      } finally {
-          if (lock.isHeldByCurrentThread()) {
-              lock.unlock();
-          }
+    try {
+      return task.get();
+    } finally {
+      if (lock.isHeldByCurrentThread()) {
+        lock.unlock();
       }
-
+    }
   }
 }
