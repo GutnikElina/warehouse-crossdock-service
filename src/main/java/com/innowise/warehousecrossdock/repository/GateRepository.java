@@ -6,5 +6,5 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface GateRepository extends JpaRepository<DockGate, UUID> {
-  Optional<DockGate> findByIdAndHubId(UUID id, UUID hubId);
+    Optional<DockGate> findByIdAndHubId(UUID id, UUID hubId);
 }

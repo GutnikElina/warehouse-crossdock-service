@@ -8,11 +8,11 @@ import lombok.Getter;
 @Getter
 public class ErrorDetails {
 
-  private final String message;
+    private final String message;
 
-  private final String errorName;
+    private final String errorName;
 
-  private final int httpStatus;
+    private final int httpStatus;
 
-  private final Instant timestamp;
+    private final Instant timestamp;
 }

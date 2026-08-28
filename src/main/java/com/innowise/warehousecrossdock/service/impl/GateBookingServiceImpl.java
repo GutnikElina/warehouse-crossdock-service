@@ -14,20 +14,20 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class GateBookingServiceImpl implements GateBookingService {
 
-  private static final String RESERVATION_TIMER_NAME = "dock_slot_reservation_duration_seconds";
+    private static final String RESERVATION_TIMER_NAME = "dock_slot_reservation_duration_seconds";
 
-  private final GateLockFacade gateLockFacade;
-  private final GateBookingTransactionalOps transactionalOps;
-  private final MeterRegistry meterRegistry;
+    private final GateLockFacade gateLockFacade;
+    private final GateBookingTransactionalOps transactionalOps;
+    private final MeterRegistry meterRegistry;
 
-  @Override
-  public ReserveSlotResponse reserveSlot(UUID hubId, ReserveSlotRequest request) {
-    var sample = Timer.start(meterRegistry);
-    try {
-      return gateLockFacade.executeWithGateLock(
-          request.gateId(), () -> transactionalOps.checkAndBook(hubId, request));
-    } finally {
-      sample.stop(meterRegistry.timer(RESERVATION_TIMER_NAME));
+    @Override
+    public ReserveSlotResponse reserveSlot(UUID hubId, ReserveSlotRequest request) {
+        var sample = Timer.start(meterRegistry);
+        try {
+            return gateLockFacade.executeWithGateLock(
+                    request.gateId(), () -> transactionalOps.checkAndBook(hubId, request));
+        } finally {
+            sample.stop(meterRegistry.timer(RESERVATION_TIMER_NAME));
+        }
     }
-  }
 }

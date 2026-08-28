@@ -17,43 +17,42 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class GateBookingTransactionalOps {
 
-  private final GateRepository gateRepository;
-  private final GateBookingSlotRepository slotRepository;
+    private final GateRepository gateRepository;
+    private final GateBookingSlotRepository slotRepository;
 
-  @Transactional
-  public ReserveSlotResponse checkAndBook(UUID hubId, ReserveSlotRequest request) {
+    @Transactional
+    public ReserveSlotResponse checkAndBook(UUID hubId, ReserveSlotRequest request) {
 
-    DockGate gate =
-        gateRepository
+        DockGate gate = gateRepository
             .findByIdAndHubId(request.gateId(), hubId)
             .orElseThrow(GateNotFoundException::new);
 
-    validateCompatibility(gate, request);
+        validateCompatibility(gate, request);
 
-    Optional.of(
-            slotRepository.existsOverlapping(
-                request.gateId(),
-                request.startTime().toZonedDateTime(),
-                request.endTime().toZonedDateTime()))
-        .filter(Boolean::booleanValue)
-        .ifPresent(
-            overlap -> {
-              throw new SlotAlreadyBookedException();
-            });
+        Optional.of(
+                slotRepository.existsOverlapping(
+                        request.gateId(),
+                        request.startTime().toZonedDateTime(),
+                        request.endTime().toZonedDateTime()))
+            .filter(Boolean::booleanValue)
+            .ifPresent(
+                    overlap -> {
+                        throw new SlotAlreadyBookedException();
+                    });
 
-    GateBookingSlot slot = GateBookingSlot.book(request);
+        GateBookingSlot slot = GateBookingSlot.book(request);
 
-    slotRepository.saveAndFlush(slot);
+        slotRepository.saveAndFlush(slot);
 
-    return ReserveSlotResponse.from(slot);
-  }
-
-  private void validateCompatibility(DockGate gate, ReserveSlotRequest request) {
-    if (!gate.supports(request.transportType())) {
-      throw new IncompatibleGateException();
+        return ReserveSlotResponse.from(slot);
     }
-    if (!gate.matchesTemperature(request.requiredTemperatureMode())) {
-      throw new IncompatibleGateException();
+
+    private void validateCompatibility(DockGate gate, ReserveSlotRequest request) {
+        if (!gate.supports(request.transportType())) {
+            throw new IncompatibleGateException();
+        }
+        if (!gate.matchesTemperature(request.requiredTemperatureMode())) {
+            throw new IncompatibleGateException();
+        }
     }
-  }
 }

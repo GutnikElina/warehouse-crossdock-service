@@ -15,36 +15,38 @@ import org.springframework.stereotype.Component;
 @Component
 public class GateTestDataFactory {
 
-  @Autowired private HubRepository hubRepository;
-  @Autowired private GateRepository gateRepository;
+    @Autowired
+    private HubRepository hubRepository;
+    @Autowired
+    private GateRepository gateRepository;
 
-  public UUID seedHub() {
-    WarehouseHub tempHub = new WarehouseHub(UUID.randomUUID(), "Hub 1", "New York");
-    return hubRepository.saveAndFlush(tempHub).getId();
-  }
+    public UUID seedHub() {
+        WarehouseHub tempHub = new WarehouseHub(UUID.randomUUID(), "Hub 1", "New York");
+        return hubRepository.saveAndFlush(tempHub).getId();
+    }
 
-  public UUID seedGate(UUID hubId, TemperatureMode temperatureMode, TransportType transportType) {
-    DockGate tempGate =
-        new DockGate(UUID.randomUUID(), hubId, "Gate A1", temperatureMode, transportType);
+    public UUID seedGate(UUID hubId, TemperatureMode temperatureMode, TransportType transportType) {
+        DockGate tempGate = new DockGate(UUID.randomUUID(), hubId, "Gate A1", temperatureMode,
+                transportType);
 
-    return gateRepository.saveAndFlush(tempGate).getId();
-  }
+        return gateRepository.saveAndFlush(tempGate).getId();
+    }
 
-  public UUID seedRoute() {
-    return UUID.randomUUID();
-  }
+    public UUID seedRoute() {
+        return UUID.randomUUID();
+    }
 
-  public ReserveSlotRequest requestFor(
-      UUID gateId,
-      UUID routeId,
-      String startIso,
-      String endIso,
-      TransportType transportType,
-      TemperatureMode temperatureMode) {
+    public ReserveSlotRequest requestFor(
+            UUID gateId,
+            UUID routeId,
+            String startIso,
+            String endIso,
+            TransportType transportType,
+            TemperatureMode temperatureMode) {
 
-    OffsetDateTime startTime = OffsetDateTime.parse(startIso);
-    OffsetDateTime endTime = OffsetDateTime.parse(endIso);
-    return new ReserveSlotRequest(
-        gateId, routeId, startTime, endTime, transportType, temperatureMode);
-  }
+        OffsetDateTime startTime = OffsetDateTime.parse(startIso);
+        OffsetDateTime endTime = OffsetDateTime.parse(endIso);
+        return new ReserveSlotRequest(
+                gateId, routeId, startTime, endTime, transportType, temperatureMode);
+    }
 }

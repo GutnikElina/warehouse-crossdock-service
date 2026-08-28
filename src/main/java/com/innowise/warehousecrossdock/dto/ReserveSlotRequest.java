@@ -7,13 +7,13 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public record ReserveSlotRequest(
-    @NotNull UUID gateId,
-    @NotNull UUID routeId,
-    @NotNull OffsetDateTime startTime,
-    @NotNull OffsetDateTime endTime,
-    @NotNull TransportType transportType,
-    TemperatureMode temperatureMode) {
-  public TemperatureMode requiredTemperatureMode() {
-    return temperatureMode == null ? TemperatureMode.DRY : temperatureMode;
-  }
+        @NotNull UUID gateId,
+        @NotNull UUID routeId,
+        @NotNull OffsetDateTime startTime,
+        @NotNull OffsetDateTime endTime,
+        @NotNull TransportType transportType,
+        TemperatureMode temperatureMode) {
+    public TemperatureMode requiredTemperatureMode() {
+        return temperatureMode == null ? TemperatureMode.DRY : temperatureMode;
+    }
 }

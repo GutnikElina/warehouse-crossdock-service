@@ -22,81 +22,78 @@ import org.testcontainers.utility.DockerImageName;
 @Testcontainers
 class DistributedLockExecutorIntegrationTest {
 
-  @Container
-  private static final GenericContainer<?> REDIS =
-      new GenericContainer<>(DockerImageName.parse("redis:7.4-alpine")).withExposedPorts(6379);
+    @Container
+    private static final GenericContainer<?> REDIS = new GenericContainer<>(
+            DockerImageName.parse("redis:7.4-alpine"))
+        .withExposedPorts(6379);
 
-  private RedissonClient redissonClient;
-  private DistributedLockExecutor executor;
+    private RedissonClient redissonClient;
+    private DistributedLockExecutor executor;
 
-  @BeforeEach
-  void setUp() {
-    Config config = new Config();
-    config
-        .useSingleServer()
-        .setAddress("redis://" + REDIS.getHost() + ":" + REDIS.getMappedPort(6379));
+    @BeforeEach
+    void setUp() {
+        Config config = new Config();
+        config
+            .useSingleServer()
+            .setAddress("redis://" + REDIS.getHost() + ":" + REDIS.getMappedPort(6379));
 
-    redissonClient = Redisson.create(config);
-    executor = new DistributedLockExecutor(redissonClient);
-  }
-
-  @AfterEach
-  void tearDown() {
-    if (redissonClient != null) {
-      redissonClient.shutdown();
+        redissonClient = Redisson.create(config);
+        executor = new DistributedLockExecutor(redissonClient);
     }
-  }
 
-  @Test
-  void shouldThrowExceptionWhenSecondThreadTriesToAcquireSameLock() throws Exception {
-    String lockKey = "gate-slot-101";
+    @AfterEach
+    void tearDown() {
+        if (redissonClient != null) {
+            redissonClient.shutdown();
+        }
+    }
 
-    CountDownLatch lockAcquiredByA = new CountDownLatch(1);
-    CountDownLatch allowAToFinish = new CountDownLatch(1);
+    @Test
+    void shouldThrowExceptionWhenSecondThreadTriesToAcquireSameLock() throws Exception {
+        String lockKey = "gate-slot-101";
 
-    CompletableFuture<Void> threadA =
-        CompletableFuture.runAsync(
-            () ->
-                executor.executeWithLock(
-                    lockKey,
-                    100,
-                    2000,
-                    TimeUnit.MILLISECONDS,
-                    () -> {
-                      lockAcquiredByA.countDown();
-                      try {
-                        allowAToFinish.await();
-                      } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                      }
-                      return "Thread A done";
-                    }));
+        CountDownLatch lockAcquiredByA = new CountDownLatch(1);
+        CountDownLatch allowAToFinish = new CountDownLatch(1);
 
-    lockAcquiredByA.await();
+        CompletableFuture<Void> threadA = CompletableFuture.runAsync(
+                () -> executor.executeWithLock(
+                        lockKey,
+                        100,
+                        2000,
+                        TimeUnit.MILLISECONDS,
+                        () -> {
+                            lockAcquiredByA.countDown();
+                            try {
+                                allowAToFinish.await();
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                            }
+                            return "Thread A done";
+                        }));
 
-    CompletableFuture<Void> threadB =
-        CompletableFuture.runAsync(
-            () ->
-                executor.executeWithLock(
-                    lockKey, 100, 2000, TimeUnit.MILLISECONDS, () -> "Thread B done"));
+        lockAcquiredByA.await();
 
-    ExecutionException exception = assertThrows(ExecutionException.class, threadB::get);
-    assertThat(exception.getCause()).isInstanceOf(GateSlotAlreadyLockedException.class);
+        CompletableFuture<Void> threadB = CompletableFuture.runAsync(
+                () -> executor.executeWithLock(
+                        lockKey, 100, 2000, TimeUnit.MILLISECONDS, () -> "Thread B done"));
 
-    allowAToFinish.countDown();
-    threadA.get();
-  }
+        ExecutionException exception = assertThrows(ExecutionException.class, threadB::get);
+        assertThat(exception.getCause()).isInstanceOf(GateSlotAlreadyLockedException.class);
 
-  @Test
-  void shouldAllowSecondThreadToAcquireLockAfterFirstReleasesIt() {
-    String lockKey = "gate-slot-102";
+        allowAToFinish.countDown();
+        threadA.get();
+    }
 
-    String resultA =
-        executor.executeWithLock(lockKey, 100, 1000, TimeUnit.MILLISECONDS, () -> "Result A");
-    String resultB =
-        executor.executeWithLock(lockKey, 100, 1000, TimeUnit.MILLISECONDS, () -> "Result B");
+    @Test
+    void shouldAllowSecondThreadToAcquireLockAfterFirstReleasesIt() {
+        String lockKey = "gate-slot-102";
 
-    assertThat(resultA).isEqualTo("Result A");
-    assertThat(resultB).isEqualTo("Result B");
-  }
+        String resultA = executor.executeWithLock(lockKey, 100, 1000, TimeUnit.MILLISECONDS,
+                () -> "Result A");
+        String resultB = executor.executeWithLock(lockKey, 100, 1000, TimeUnit.MILLISECONDS,
+                () -> "Result B");
+
+        assertThat(resultA).isEqualTo("Result A");
+        assertThat(resultB).isEqualTo("Result B");
+    }
 }

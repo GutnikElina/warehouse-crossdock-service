@@ -5,5 +5,5 @@ import com.innowise.warehousecrossdock.dto.ReserveSlotResponse;
 import java.util.UUID;
 
 public interface GateBookingService {
-  ReserveSlotResponse reserveSlot(UUID hubId, ReserveSlotRequest request);
+    ReserveSlotResponse reserveSlot(UUID hubId, ReserveSlotRequest request);
 }

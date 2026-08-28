@@ -26,28 +26,29 @@ import org.hibernate.annotations.Type;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class GateBookingSlot {
 
-  @Id @GeneratedValue private UUID id;
+    @Id
+    @GeneratedValue
+    private UUID id;
 
-  @Column(name = "gate_id", nullable = false)
-  private UUID gateId;
+    @Column(name = "gate_id", nullable = false)
+    private UUID gateId;
 
-  @Column(name = "route_id", nullable = false)
-  private UUID routeId;
+    @Column(name = "route_id", nullable = false)
+    private UUID routeId;
 
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  private GateBookingStatus status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private GateBookingStatus status;
 
-  @Type(PostgreSQLRangeType.class)
-  @Column(name = "booking_interval", nullable = false, columnDefinition = "tstzrange")
-  private Range<ZonedDateTime> bookingInterval;
+    @Type(PostgreSQLRangeType.class)
+    @Column(name = "booking_interval", nullable = false, columnDefinition = "tstzrange")
+    private Range<ZonedDateTime> bookingInterval;
 
-  public static GateBookingSlot book(ReserveSlotRequest request) {
-    Range<ZonedDateTime> interval =
-        Range.closedOpen(
-            request.startTime().toZonedDateTime(),
-            request.endTime().toZonedDateTime().plus(ConfigValues.SLOT_BOOKING_INTERVAL));
-    return new GateBookingSlot(
-        null, request.gateId(), request.routeId(), GateBookingStatus.BOOKED, interval);
-  }
+    public static GateBookingSlot book(ReserveSlotRequest request) {
+        Range<ZonedDateTime> interval = Range.closedOpen(
+                request.startTime().toZonedDateTime(),
+                request.endTime().toZonedDateTime().plus(ConfigValues.SLOT_BOOKING_INTERVAL));
+        return new GateBookingSlot(
+                null, request.gateId(), request.routeId(), GateBookingStatus.BOOKED, interval);
+    }
 }
