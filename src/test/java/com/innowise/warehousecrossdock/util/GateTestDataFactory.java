@@ -1,4 +1,4 @@
-package com.innowise.warehousecrossdock.service;
+package com.innowise.warehousecrossdock.util;
 
 import com.innowise.warehousecrossdock.dto.ReserveSlotRequest;
 import com.innowise.warehousecrossdock.model.DockGate;

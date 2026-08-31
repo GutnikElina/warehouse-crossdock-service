@@ -1,57 +1,37 @@
 package com.innowise.warehousecrossdock.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.innowise.warehousecrossdock.dto.ReserveSlotRequest;
 import com.innowise.warehousecrossdock.dto.ReserveSlotResponse;
 import com.innowise.warehousecrossdock.exception.ErrorDetails;
 import com.innowise.warehousecrossdock.model.GateBookingStatus;
 import com.innowise.warehousecrossdock.model.TemperatureMode;
 import com.innowise.warehousecrossdock.model.TransportType;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import com.innowise.warehousecrossdock.util.AbstractIntegrationTest;
+import com.innowise.warehousecrossdock.util.GateTestDataFactory;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClient;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
-class GateBookingReservationIntegrationTest {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.*;
 
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16")
-        .withDatabaseName("crossdock");
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchException;
 
-    @Container
-    static GenericContainer<?> redis = new GenericContainer<>("redis:7").withExposedPorts(6379);
+class GateBookingReservationIntegrationTest extends AbstractIntegrationTest {
 
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("spring.data.redis.host", redis::getHost);
-        registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379).toString());
-    }
+    @LocalServerPort
+    private int port;
 
-    @Autowired
-    TestRestTemplate restTemplate;
+    private RestClient restClient;
 
     @Autowired
     GateTestDataFactory gateTestDataFactory;
@@ -60,12 +40,19 @@ class GateBookingReservationIntegrationTest {
     private UUID gateId;
     private UUID routeId;
 
+    @BeforeEach
+    void setUp() {
+        this.restClient = RestClient.builder()
+            .baseUrl("http://localhost:" + port)
+            .build();
+    }
+
     @Test
     void returns201_andPersistsSlot_onFirstReservation() {
         hubId = gateTestDataFactory.seedHub();
         gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
         routeId = gateTestDataFactory.seedRoute();
-        ReserveSlotRequest request = gateTestDataFactory.requestFor(
+        var request = gateTestDataFactory.requestFor(
                 gateId,
                 routeId,
                 "2026-09-01T10:00:00Z",
@@ -73,11 +60,16 @@ class GateBookingReservationIntegrationTest {
                 TransportType.TRUCK,
                 TemperatureMode.DRY);
 
-        ResponseEntity<ReserveSlotResponse> response = restTemplate.postForEntity(
-                "/api/v1/hubs/{hubId}/slots/reserve", request, ReserveSlotResponse.class, hubId);
+        var responseEntity = restClient
+            .post()
+            .uri("/api/v1/hubs/{hubId}/slots/reserve", hubId)
+            .body(request)
+            .retrieve()
+            .toEntity(ReserveSlotResponse.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(response.getBody().status()).isEqualTo(GateBookingStatus.BOOKED);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(responseEntity.getBody()).isNotNull();
+        assertThat(responseEntity.getBody().status()).isEqualTo(GateBookingStatus.BOOKED);
     }
 
     @Test
@@ -85,14 +77,14 @@ class GateBookingReservationIntegrationTest {
         hubId = gateTestDataFactory.seedHub();
         gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
         routeId = gateTestDataFactory.seedRoute();
-        ReserveSlotRequest first = gateTestDataFactory.requestFor(
+        var first = gateTestDataFactory.requestFor( // TODO rename
                 gateId,
                 routeId,
                 "2026-09-01T11:00:00Z",
                 "2026-09-01T11:45:00Z",
                 TransportType.TRUCK,
                 TemperatureMode.DRY);
-        ReserveSlotRequest accepted = gateTestDataFactory.requestFor(
+        var accepted = gateTestDataFactory.requestFor( // TODO rename
                 gateId,
                 routeId,
                 "2026-09-01T12:00:00Z",
@@ -100,13 +92,21 @@ class GateBookingReservationIntegrationTest {
                 TransportType.TRUCK,
                 TemperatureMode.DRY);
 
-        restTemplate.postForEntity(
-                "/api/v1/hubs/{hubId}/slots/reserve", first, ReserveSlotResponse.class, hubId);
-        ResponseEntity<ReserveSlotResponse> second = restTemplate.postForEntity(
-                "/api/v1/hubs/{hubId}/slots/reserve", accepted, ReserveSlotResponse.class, hubId);
+        restClient.post()
+            .uri("/api/v1/hubs/{hubId}/slots/reserve", hubId)
+            .body(first)
+            .retrieve()
+            .toEntity(ReserveSlotResponse.class);
+        var secondResultResponseEntity = restClient.post()
+            .uri("/api/v1/hubs/{hubId}/slots/reserve", hubId)
+            .body(accepted)
+            .retrieve()
+            .toEntity(ReserveSlotResponse.class);
 
-        assertThat(second.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(second.getBody().status()).isEqualTo(GateBookingStatus.BOOKED);
+        assertThat(secondResultResponseEntity.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(secondResultResponseEntity.getBody()).isNotNull();
+        assertThat(secondResultResponseEntity.getBody().status())
+            .isEqualTo(GateBookingStatus.BOOKED);
     }
 
     @Test
@@ -129,12 +129,21 @@ class GateBookingReservationIntegrationTest {
                 TransportType.TRUCK,
                 TemperatureMode.DRY);
 
-        restTemplate.postForEntity(
-                "/api/v1/hubs/{hubId}/slots/reserve", first, ReserveSlotResponse.class, hubId);
-        ResponseEntity<ErrorDetails> second = restTemplate.postForEntity(
-                "/api/v1/hubs/{hubId}/slots/reserve", overlapping, ErrorDetails.class, hubId);
+        restClient.post()
+            .uri("/api/v1/hubs/{hubId}/slots/reserve", hubId)
+            .body(first)
+            .retrieve()
+            .toEntity(ReserveSlotResponse.class);
+        HttpClientErrorException exception = (HttpClientErrorException) catchException(
+                () -> restClient.post()
+                    .uri("/api/v1/hubs/{hubId}/slots/reserve", hubId)
+                    .body(overlapping)
+                    .retrieve()
+                    .toEntity(ReserveSlotResponse.class));
 
-        assertThat(second.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        ErrorDetails errorDetails = exception.getResponseBodyAs(ErrorDetails.class);
+        assertThat(errorDetails).isNotNull();
     }
 
     @Test
@@ -157,12 +166,21 @@ class GateBookingReservationIntegrationTest {
                 TransportType.TRUCK,
                 TemperatureMode.DRY);
 
-        restTemplate.postForEntity(
-                "/api/v1/hubs/{hubId}/slots/reserve", first, ReserveSlotResponse.class, hubId);
-        ResponseEntity<ErrorDetails> second = restTemplate.postForEntity(
-                "/api/v1/hubs/{hubId}/slots/reserve", overlapping, ErrorDetails.class, hubId);
+        restClient.post()
+            .uri("/api/v1/hubs/{hubId}/slots/reserve", hubId)
+            .body(first)
+            .retrieve()
+            .toEntity(ReserveSlotResponse.class);
+        HttpClientErrorException exception = (HttpClientErrorException) catchException(
+                () -> restClient.post()
+                    .uri("/api/v1/hubs/{hubId}/slots/reserve", hubId)
+                    .body(overlapping)
+                    .retrieve()
+                    .toEntity(ReserveSlotResponse.class));
 
-        assertThat(second.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        ErrorDetails errorDetails = exception.getResponseBodyAs(ErrorDetails.class);
+        assertThat(errorDetails).isNotNull();
     }
 
     @Test
@@ -185,12 +203,21 @@ class GateBookingReservationIntegrationTest {
                 TransportType.TRUCK,
                 TemperatureMode.DRY);
 
-        restTemplate.postForEntity(
-                "/api/v1/hubs/{hubId}/slots/reserve", second, ReserveSlotResponse.class, hubId);
-        ResponseEntity<ErrorDetails> first = restTemplate.postForEntity(
-                "/api/v1/hubs/{hubId}/slots/reserve", overlapping, ErrorDetails.class, hubId);
+        restClient.post()
+            .uri("/api/v1/hubs/{hubId}/slots/reserve", hubId)
+            .body(second)
+            .retrieve()
+            .toEntity(ReserveSlotResponse.class);
+        HttpClientErrorException exception = (HttpClientErrorException) catchException(
+                () -> restClient.post()
+                    .uri("/api/v1/hubs/{hubId}/slots/reserve", hubId)
+                    .body(overlapping)
+                    .retrieve()
+                    .toEntity(ReserveSlotResponse.class));
 
-        assertThat(first.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        ErrorDetails errorDetails = exception.getResponseBodyAs(ErrorDetails.class);
+        assertThat(errorDetails).isNotNull();
     }
 
     @Test
@@ -207,10 +234,16 @@ class GateBookingReservationIntegrationTest {
                 TransportType.TRUCK,
                 TemperatureMode.DRY);
 
-        ResponseEntity<ErrorDetails> response = restTemplate.postForEntity(
-                "/api/v1/hubs/{hubId}/slots/reserve", request, ErrorDetails.class, hubId);
+        HttpClientErrorException exception = (HttpClientErrorException) catchException(
+                () -> restClient.post()
+                    .uri("/api/v1/hubs/{hubId}/slots/reserve", hubId)
+                    .body(request)
+                    .retrieve()
+                    .toEntity(ReserveSlotResponse.class));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        ErrorDetails errorDetails = exception.getResponseBodyAs(ErrorDetails.class);
+        assertThat(errorDetails).isNotNull();
     }
 
     @Test
@@ -227,11 +260,16 @@ class GateBookingReservationIntegrationTest {
                 TransportType.TRUCK,
                 TemperatureMode.FROZEN);
 
-        ResponseEntity<ErrorDetails> response = restTemplate.postForEntity(
-                "/api/v1/hubs/{hubId}/slots/reserve", frozenCargoRequest, ErrorDetails.class,
-                hubId);
+        HttpClientErrorException exception = (HttpClientErrorException) catchException(
+                () -> restClient.post()
+                    .uri("/api/v1/hubs/{hubId}/slots/reserve", hubId)
+                    .body(frozenCargoRequest)
+                    .retrieve()
+                    .toEntity(ReserveSlotResponse.class));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
+        ErrorDetails errorDetails = exception.getResponseBodyAs(ErrorDetails.class);
+        assertThat(errorDetails).isNotNull();
     }
 
     @Test
@@ -258,10 +296,14 @@ class GateBookingReservationIntegrationTest {
                                 () -> {
                                     readyLatch.countDown();
                                     startLatch.await();
-                                    ResponseEntity<ErrorDetails> resp = restTemplate.postForEntity(
-                                            "/api/v1/hubs/{hubId}/slots/reserve", request,
-                                            ErrorDetails.class, hubId);
-                                    return resp.getStatusCode();
+                                    var exception = (HttpClientErrorException) catchException(
+                                            () -> restClient.post()
+                                                .uri("/api/v1/hubs/{hubId}/slots/reserve",
+                                                        hubId)
+                                                .body(request)
+                                                .retrieve()
+                                                .toEntity(ReserveSlotResponse.class));
+                                    return exception.getStatusCode();
                                 }));
             }
             readyLatch.await();

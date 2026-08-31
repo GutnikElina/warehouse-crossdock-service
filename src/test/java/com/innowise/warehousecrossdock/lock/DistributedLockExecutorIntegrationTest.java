@@ -8,6 +8,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+
+import com.innowise.warehousecrossdock.util.AbstractIntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,13 +21,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-@Testcontainers
-class DistributedLockExecutorIntegrationTest {
-
-    @Container
-    private static final GenericContainer<?> REDIS = new GenericContainer<>(
-            DockerImageName.parse("redis:7.4-alpine"))
-        .withExposedPorts(6379);
+class DistributedLockExecutorIntegrationTest extends AbstractIntegrationTest {
 
     private RedissonClient redissonClient;
     private DistributedLockExecutor executor;
@@ -35,7 +31,8 @@ class DistributedLockExecutorIntegrationTest {
         Config config = new Config();
         config
             .useSingleServer()
-            .setAddress("redis://" + REDIS.getHost() + ":" + REDIS.getMappedPort(6379));
+            .setAddress("redis://" + redisContainer.getHost() + ":"
+                    + redisContainer.getMappedPort(6379));
 
         redissonClient = Redisson.create(config);
         executor = new DistributedLockExecutor(redissonClient);
