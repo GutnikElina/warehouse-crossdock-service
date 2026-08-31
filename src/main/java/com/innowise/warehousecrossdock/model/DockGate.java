@@ -1,0 +1,44 @@
+package com.innowise.warehousecrossdock.model;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "dock_gates")
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+public class DockGate {
+
+  @Id private UUID id;
+
+  @Column(name = "hub_id", nullable = false)
+  private UUID hubId;
+
+  @Column(nullable = false)
+  private String name;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "temperature_mode", nullable = false)
+  private TemperatureMode temperatureMode;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "gate_type", nullable = false)
+  private TransportType transportType;
+
+  public boolean supports(TransportType type) {
+    return transportType == type;
+  }
+
+  public boolean matchesTemperature(TemperatureMode required) {
+    return temperatureMode.supports(required);
+  }
+}
