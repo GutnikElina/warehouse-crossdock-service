@@ -11,17 +11,17 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class GateLockFacade {
 
-  private static final long DEFAULT_WAIT_TIME = 1L;
-  private static final long DEFAULT_LEASE_TIME = 5L;
-  private static final String GATE_LOCK_PATTERN = "lock:gate:%s";
+    private static final long DEFAULT_WAIT_TIME = 1L;
+    private static final long DEFAULT_LEASE_TIME = 5L;
+    private static final String GATE_LOCK_PATTERN = "lock:gate:%s";
 
-  private final DistributedLockExecutor lockExecutor;
+    private final DistributedLockExecutor lockExecutor;
 
-  public <T> T executeWithGateLock(UUID gateId, Supplier<T> task) {
+    public <T> T executeWithGateLock(UUID gateId, Supplier<T> task) {
 
-    String lockKey = GATE_LOCK_PATTERN.formatted(gateId);
+        String lockKey = GATE_LOCK_PATTERN.formatted(gateId);
 
-    return lockExecutor.executeWithLock(
-        lockKey, DEFAULT_WAIT_TIME, DEFAULT_LEASE_TIME, TimeUnit.SECONDS, task);
-  }
+        return lockExecutor.executeWithLock(
+                lockKey, DEFAULT_WAIT_TIME, DEFAULT_LEASE_TIME, TimeUnit.SECONDS, task);
+    }
 }

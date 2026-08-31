@@ -32,97 +32,103 @@ import org.springframework.dao.DataIntegrityViolationException;
 @ExtendWith(MockitoExtension.class)
 class GateBookingTransactionalOpsTest {
 
-  @Mock GateRepository gateRepository;
-  @Mock GateBookingSlotRepository slotRepository;
-  @InjectMocks GateBookingTransactionalOps ops;
+    @Mock
+    GateRepository gateRepository;
+    @Mock
+    GateBookingSlotRepository slotRepository;
+    @InjectMocks
+    GateBookingTransactionalOps ops;
 
-  private final UUID hubId = UUID.randomUUID();
-  private final UUID gateId = UUID.randomUUID();
-  private ReserveSlotRequest request;
-  private DockGate compatibleGate;
+    private final UUID hubId = UUID.randomUUID();
+    private final UUID gateId = UUID.randomUUID();
+    private ReserveSlotRequest request;
+    private DockGate compatibleGate;
 
-  @BeforeEach
-  void setUp() {
-    request =
-        new ReserveSlotRequest(
-            gateId,
-            UUID.randomUUID(),
-            OffsetDateTime.parse("2026-09-01T14:00:00Z"),
-            OffsetDateTime.parse("2026-09-01T14:45:00Z"),
-            TransportType.TRUCK,
-            TemperatureMode.DRY);
-    compatibleGate =
-        new DockGate(gateId, hubId, "Gate A1", TemperatureMode.DRY, TransportType.TRUCK);
-  }
+    @BeforeEach
+    void setUp() {
+        request = new ReserveSlotRequest(
+                gateId,
+                UUID.randomUUID(),
+                OffsetDateTime.parse("2026-09-01T14:00:00Z"),
+                OffsetDateTime.parse("2026-09-01T14:45:00Z"),
+                TransportType.TRUCK,
+                TemperatureMode.DRY);
+        compatibleGate = new DockGate(gateId, hubId, "Gate A1", TemperatureMode.DRY,
+                TransportType.TRUCK);
+    }
 
-  @Test
-  void booksSlot_whenGateExistsAndNoOverlap() {
-    when(gateRepository.findByIdAndHubId(gateId, hubId)).thenReturn(Optional.of(compatibleGate));
-    when(slotRepository.existsOverlapping(
-            gateId, request.startTime().toZonedDateTime(), request.endTime().toZonedDateTime()))
-        .thenReturn(false);
+    @Test
+    void booksSlot_whenGateExistsAndNoOverlap() {
+        when(gateRepository.findByIdAndHubId(gateId, hubId))
+            .thenReturn(Optional.of(compatibleGate));
+        when(slotRepository.existsOverlapping(
+                gateId, request.startTime().toZonedDateTime(), request.endTime().toZonedDateTime()))
+            .thenReturn(false);
 
-    ReserveSlotResponse response = ops.checkAndBook(hubId, request);
+        ReserveSlotResponse response = ops.checkAndBook(hubId, request);
 
-    assertThat(response.status()).isEqualTo(GateBookingStatus.BOOKED);
-    verify(slotRepository).saveAndFlush(any(GateBookingSlot.class));
-  }
+        assertThat(response.status()).isEqualTo(GateBookingStatus.BOOKED);
+        verify(slotRepository).saveAndFlush(any(GateBookingSlot.class));
+    }
 
-  @Test
-  void throwsIncompatibleGate_whenTransportTypeNotSupported() {
-    DockGate containerOnlyGate =
-        new DockGate(gateId, hubId, "Gate B2", TemperatureMode.DRY, TransportType.CONTAINER_TRUCK);
-    when(gateRepository.findByIdAndHubId(gateId, hubId)).thenReturn(Optional.of(containerOnlyGate));
+    @Test
+    void throwsIncompatibleGate_whenTransportTypeNotSupported() {
+        DockGate containerOnlyGate = new DockGate(gateId, hubId, "Gate B2", TemperatureMode.DRY,
+                TransportType.CONTAINER_TRUCK);
+        when(gateRepository.findByIdAndHubId(gateId, hubId))
+            .thenReturn(Optional.of(containerOnlyGate));
 
-    assertThatThrownBy(() -> ops.checkAndBook(hubId, request))
-        .isInstanceOf(IncompatibleGateException.class);
-    verify(slotRepository, never()).existsOverlapping(any(), any(), any());
-  }
+        assertThatThrownBy(() -> ops.checkAndBook(hubId, request))
+            .isInstanceOf(IncompatibleGateException.class);
+        verify(slotRepository, never()).existsOverlapping(any(), any(), any());
+    }
 
-  @Test
-  void throwsIncompatibleGate_whenGateIsTooWarmForFrozenCargo() {
-    ReserveSlotRequest frozenCargoRequest =
-        new ReserveSlotRequest(
-            gateId,
-            request.routeId(),
-            request.startTime(),
-            request.endTime(),
-            TransportType.TRUCK,
-            TemperatureMode.FROZEN);
-    when(gateRepository.findByIdAndHubId(gateId, hubId)).thenReturn(Optional.of(compatibleGate));
+    @Test
+    void throwsIncompatibleGate_whenGateIsTooWarmForFrozenCargo() {
+        ReserveSlotRequest frozenCargoRequest = new ReserveSlotRequest(
+                gateId,
+                request.routeId(),
+                request.startTime(),
+                request.endTime(),
+                TransportType.TRUCK,
+                TemperatureMode.FROZEN);
+        when(gateRepository.findByIdAndHubId(gateId, hubId))
+            .thenReturn(Optional.of(compatibleGate));
 
-    assertThatThrownBy(() -> ops.checkAndBook(hubId, frozenCargoRequest))
-        .isInstanceOf(IncompatibleGateException.class);
-  }
+        assertThatThrownBy(() -> ops.checkAndBook(hubId, frozenCargoRequest))
+            .isInstanceOf(IncompatibleGateException.class);
+    }
 
-  @Test
-  void throwsSlotAlreadyBooked_whenOverlapDetectedByPreCheck() {
-    when(gateRepository.findByIdAndHubId(gateId, hubId)).thenReturn(Optional.of(compatibleGate));
-    when(slotRepository.existsOverlapping(
-            gateId, request.startTime().toZonedDateTime(), request.endTime().toZonedDateTime()))
-        .thenReturn(true);
+    @Test
+    void throwsSlotAlreadyBooked_whenOverlapDetectedByPreCheck() {
+        when(gateRepository.findByIdAndHubId(gateId, hubId))
+            .thenReturn(Optional.of(compatibleGate));
+        when(slotRepository.existsOverlapping(
+                gateId, request.startTime().toZonedDateTime(), request.endTime().toZonedDateTime()))
+            .thenReturn(true);
 
-    assertThatThrownBy(() -> ops.checkAndBook(hubId, request))
-        .isInstanceOf(SlotAlreadyBookedException.class);
-    verify(slotRepository, never()).saveAndFlush(any());
-  }
+        assertThatThrownBy(() -> ops.checkAndBook(hubId, request))
+            .isInstanceOf(SlotAlreadyBookedException.class);
+        verify(slotRepository, never()).saveAndFlush(any());
+    }
 
-  @Test
-  void propagatesDataIntegrityViolation_whenExcludeConstraintFiresOnInsert() {
-    when(gateRepository.findByIdAndHubId(gateId, hubId)).thenReturn(Optional.of(compatibleGate));
-    when(slotRepository.existsOverlapping(any(), any(), any())).thenReturn(false);
-    when(slotRepository.saveAndFlush(any(GateBookingSlot.class)))
-        .thenThrow(new DataIntegrityViolationException("no_overlapping_slots"));
+    @Test
+    void propagatesDataIntegrityViolation_whenExcludeConstraintFiresOnInsert() {
+        when(gateRepository.findByIdAndHubId(gateId, hubId))
+            .thenReturn(Optional.of(compatibleGate));
+        when(slotRepository.existsOverlapping(any(), any(), any())).thenReturn(false);
+        when(slotRepository.saveAndFlush(any(GateBookingSlot.class)))
+            .thenThrow(new DataIntegrityViolationException("no_overlapping_slots"));
 
-    assertThatThrownBy(() -> ops.checkAndBook(hubId, request))
-        .isInstanceOf(DataIntegrityViolationException.class);
-  }
+        assertThatThrownBy(() -> ops.checkAndBook(hubId, request))
+            .isInstanceOf(DataIntegrityViolationException.class);
+    }
 
-  @Test
-  void throwsGateNotFound_whenGateDoesNotBelongToHub() {
-    when(gateRepository.findByIdAndHubId(gateId, hubId)).thenReturn(Optional.empty());
+    @Test
+    void throwsGateNotFound_whenGateDoesNotBelongToHub() {
+        when(gateRepository.findByIdAndHubId(gateId, hubId)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> ops.checkAndBook(hubId, request))
-        .isInstanceOf(GateNotFoundException.class);
-  }
+        assertThatThrownBy(() -> ops.checkAndBook(hubId, request))
+            .isInstanceOf(GateNotFoundException.class);
+    }
 }

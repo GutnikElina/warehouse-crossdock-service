@@ -30,60 +30,65 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class GateBookingServiceImplTest {
 
-  @Mock GateLockFacade gateLockFacade;
+    @Mock
+    GateLockFacade gateLockFacade;
 
-  @Mock GateBookingTransactionalOps transactionalOps;
+    @Mock
+    GateBookingTransactionalOps transactionalOps;
 
-  @InjectMocks GateBookingServiceImpl service;
+    @InjectMocks
+    GateBookingServiceImpl service;
 
-  @Mock MeterRegistry meterRegistry;
+    @Mock
+    MeterRegistry meterRegistry;
 
-  @Mock MeterRegistry.Config config;
+    @Mock
+    MeterRegistry.Config config;
 
-  @Mock Clock clock;
+    @Mock
+    Clock clock;
 
-  private final UUID hubId = UUID.randomUUID();
-  private ReserveSlotRequest request;
+    private final UUID hubId = UUID.randomUUID();
+    private ReserveSlotRequest request;
 
-  @BeforeEach
-  void setUp() {
-    request =
-        new ReserveSlotRequest(
-            UUID.randomUUID(),
-            UUID.randomUUID(),
-            OffsetDateTime.now(),
-            OffsetDateTime.now().plusMinutes(45),
-            TransportType.TRUCK,
-            TemperatureMode.DRY);
-    Timer timerMock = mock(Timer.class);
-    when(meterRegistry.timer(anyString())).thenReturn(timerMock);
-    when(meterRegistry.config()).thenReturn(config);
-    when(config.clock()).thenReturn(clock);
-  }
+    @BeforeEach
+    void setUp() {
+        request = new ReserveSlotRequest(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                OffsetDateTime.now(),
+                OffsetDateTime.now().plusMinutes(45),
+                TransportType.TRUCK,
+                TemperatureMode.DRY);
+        Timer timerMock = mock(Timer.class);
+        when(meterRegistry.timer(anyString())).thenReturn(timerMock);
+        when(meterRegistry.config()).thenReturn(config);
+        when(config.clock()).thenReturn(clock);
+    }
 
-  @Test
-  @SuppressWarnings("unchecked")
-  void delegatesToTransactionalOps_throughTheGateLock() {
-    ReserveSlotResponse expected = mock(ReserveSlotResponse.class);
-    when(transactionalOps.checkAndBook(hubId, request)).thenReturn(expected);
-    when(gateLockFacade.executeWithGateLock(eq(request.gateId()), any(Supplier.class)))
-        .thenAnswer(inv -> inv.getArgument(1, Supplier.class).get());
+    @Test
+    @SuppressWarnings("unchecked")
+    void delegatesToTransactionalOps_throughTheGateLock() {
+        ReserveSlotResponse expected = mock(ReserveSlotResponse.class);
+        when(transactionalOps.checkAndBook(hubId, request)).thenReturn(expected);
+        when(gateLockFacade.executeWithGateLock(eq(request.gateId()), any(Supplier.class)))
+            .thenAnswer(inv -> inv.getArgument(1, Supplier.class).get());
 
-    ReserveSlotResponse actual = service.reserveSlot(hubId, request);
+        ReserveSlotResponse actual = service.reserveSlot(hubId, request);
 
-    assertThat(actual).isSameAs(expected);
-    verify(transactionalOps).checkAndBook(hubId, request);
-    verify(meterRegistry).timer("dock_slot_reservation_duration_seconds");
-  }
+        assertThat(actual).isSameAs(expected);
+        verify(transactionalOps).checkAndBook(hubId, request);
+        verify(meterRegistry).timer("dock_slot_reservation_duration_seconds");
+    }
 
-  @Test
-  @SuppressWarnings("unchecked")
-  void propagatesLockExceptions_andStillRecordsTheTimer() {
-    when(gateLockFacade.executeWithGateLock(eq(request.gateId()), any(Supplier.class)))
-        .thenThrow(new GateSlotAlreadyLockedException());
+    @Test
+    @SuppressWarnings("unchecked")
+    void propagatesLockExceptions_andStillRecordsTheTimer() {
+        when(gateLockFacade.executeWithGateLock(eq(request.gateId()), any(Supplier.class)))
+            .thenThrow(new GateSlotAlreadyLockedException());
 
-    assertThatThrownBy(() -> service.reserveSlot(hubId, request))
-        .isInstanceOf(GateSlotAlreadyLockedException.class);
-    verify(meterRegistry).timer("dock_slot_reservation_duration_seconds");
-  }
+        assertThatThrownBy(() -> service.reserveSlot(hubId, request))
+            .isInstanceOf(GateSlotAlreadyLockedException.class);
+        verify(meterRegistry).timer("dock_slot_reservation_duration_seconds");
+    }
 }

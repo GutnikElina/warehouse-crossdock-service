@@ -16,11 +16,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class WarehouseHub {
 
-  @Id private UUID id;
+    @Id
+    private UUID id;
 
-  @Column(nullable = false)
-  private String name;
+    @Column(nullable = false)
+    private String name;
 
-  @Column(nullable = false)
-  private String address;
+    @Column(nullable = false)
+    private String address;
 }

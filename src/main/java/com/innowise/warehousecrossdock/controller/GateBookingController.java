@@ -19,13 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class GateBookingController {
 
-  private final GateBookingService gateBookingServiceImpl;
+    private final GateBookingService gateBookingServiceImpl;
 
-  @PostMapping("/{hubId}/slots/reserve")
-  public ResponseEntity<ReserveSlotResponse> reserveSlot(
-      @PathVariable UUID hubId, @Valid @RequestBody ReserveSlotRequest request) {
+    @PostMapping("/{hubId}/slots/reserve")
+    public ResponseEntity<ReserveSlotResponse> reserveSlot(
+            @PathVariable UUID hubId, @Valid @RequestBody ReserveSlotRequest request) {
 
-    ReserveSlotResponse response = gateBookingServiceImpl.reserveSlot(hubId, request);
-    return ResponseEntity.status(HttpStatus.CREATED).body(response);
-  }
+        ReserveSlotResponse response = gateBookingServiceImpl.reserveSlot(hubId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 }

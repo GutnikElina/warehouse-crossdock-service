@@ -13,32 +13,32 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DistributedLockExecutor {
 
-  private final RedissonClient redissonClient;
+    private final RedissonClient redissonClient;
 
-  @SuppressWarnings("java:S2222")
-  public <T> T executeWithLock(
-      String lockKey, long waitTime, long leaseTime, TimeUnit unit, Supplier<T> task) {
+    @SuppressWarnings("java:S2222")
+    public <T> T executeWithLock(
+            String lockKey, long waitTime, long leaseTime, TimeUnit unit, Supplier<T> task) {
 
-    RLock lock = redissonClient.getLock(lockKey);
-    boolean acquired = false;
+        RLock lock = redissonClient.getLock(lockKey);
+        boolean acquired = false;
 
-    try {
-      acquired = lock.tryLock(waitTime, leaseTime, unit);
+        try {
+            acquired = lock.tryLock(waitTime, leaseTime, unit);
 
-      if (!acquired) {
-        throw new GateSlotAlreadyLockedException();
-      }
+            if (!acquired) {
+                throw new GateSlotAlreadyLockedException();
+            }
 
-      return task.get();
+            return task.get();
 
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new GateBookingInterruptedException();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new GateBookingInterruptedException();
 
-    } finally {
-      if (lock.isHeldByCurrentThread()) {
-        lock.unlock();
-      }
+        } finally {
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+        }
     }
-  }
 }
