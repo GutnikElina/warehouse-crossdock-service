@@ -12,12 +12,12 @@ import org.testcontainers.utility.DockerImageName;
 public abstract class AbstractIntegrationTest {
 
     @ServiceConnection
-    public static final PostgreSQLContainer postgresContainer = new PostgreSQLContainer(
+    public static final PostgreSQLContainer POSTGRES_CONTAINER = new PostgreSQLContainer(
             DockerImageName.parse("postgres:15"))
         .withDatabaseName("crossdock");
 
     @ServiceConnection
-    public static final RedisContainer redisContainer = new RedisContainer(
+    public static final RedisContainer REDIS_CONTAINER = new RedisContainer(
             (DockerImageName.parse("redis:7")))
         .withExposedPorts(6379);
 

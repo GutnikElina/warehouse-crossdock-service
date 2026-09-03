@@ -1,11 +1,14 @@
 package com.innowise.warehousecrossdock.exception;
 
-import java.time.Instant;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.Instant;
+
 @Builder
 @Getter
+@AllArgsConstructor
 public class ErrorDetails {
 
     private final String message;

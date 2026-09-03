@@ -47,12 +47,14 @@
 
         <dependency>
             <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
+            <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
 
+        <!-- Source: https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-flyway -->
         <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-database-postgresql</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
@@ -102,15 +104,10 @@
             <scope>test</scope>
         </dependency>
 
+
         <dependency>
             <groupId>com.redis</groupId>
             <artifactId>testcontainers-redis</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.flywaydb.flyway-test-extensions</groupId>
-            <artifactId>flyway-spring-test</artifactId>
-            <version>10.0.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>

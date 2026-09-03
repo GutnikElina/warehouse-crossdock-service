@@ -16,10 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 class DistributedLockExecutorIntegrationTest extends AbstractIntegrationTest {
 
@@ -31,8 +27,8 @@ class DistributedLockExecutorIntegrationTest extends AbstractIntegrationTest {
         Config config = new Config();
         config
             .useSingleServer()
-            .setAddress("redis://" + redisContainer.getHost() + ":"
-                    + redisContainer.getMappedPort(6379));
+            .setAddress("redis://" + REDIS_CONTAINER.getHost() + ":"
+                    + REDIS_CONTAINER.getMappedPort(6379));
 
         redissonClient = Redisson.create(config);
         executor = new DistributedLockExecutor(redissonClient);

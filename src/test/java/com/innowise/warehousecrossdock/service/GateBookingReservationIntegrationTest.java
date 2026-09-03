@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
@@ -296,14 +295,17 @@ class GateBookingReservationIntegrationTest extends AbstractIntegrationTest {
                                 () -> {
                                     readyLatch.countDown();
                                     startLatch.await();
-                                    var exception = (HttpClientErrorException) catchException(
-                                            () -> restClient.post()
-                                                .uri("/api/v1/hubs/{hubId}/slots/reserve",
-                                                        hubId)
-                                                .body(request)
-                                                .retrieve()
-                                                .toEntity(ReserveSlotResponse.class));
-                                    return exception.getStatusCode();
+
+                                    try {
+                                        var response = restClient.post()
+                                            .uri("/api/v1/hubs/{hubId}/slots/reserve", hubId)
+                                            .body(request)
+                                            .retrieve()
+                                            .toEntity(ReserveSlotResponse.class);
+                                        return response.getStatusCode();
+                                    } catch (HttpClientErrorException e) {
+                                        return e.getStatusCode();
+                                    }
                                 }));
             }
             readyLatch.await();

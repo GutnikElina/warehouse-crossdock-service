@@ -11,10 +11,9 @@ spring:
     redis:
       timeout: 1000ms
 
-  flyway:
-    enabled: true
-    locations: classpath:db/migration/V1__init_crossdock_schema.sql
-    clean-disabled: false
+  spring:
+    flyway:
+      enabled: true
 
   jpa:
     hibernate:
@@ -29,7 +28,3 @@ spring:
   threads:
     virtual:
       enabled: true
-
-logging:
-  level:
-    org.flywaydb: INFO
