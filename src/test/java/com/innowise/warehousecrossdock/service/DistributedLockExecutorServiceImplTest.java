@@ -1,4 +1,4 @@
-package com.innowise.warehousecrossdock.lock;
+package com.innowise.warehousecrossdock.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -9,6 +9,8 @@ import static org.mockito.Mockito.when;
 import com.innowise.warehousecrossdock.exception.GateBookingInterruptedException;
 import com.innowise.warehousecrossdock.exception.GateSlotAlreadyLockedException;
 import java.util.concurrent.TimeUnit;
+
+import com.innowise.warehousecrossdock.service.impl.DistributedLockExecutorServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,7 +20,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 
 @ExtendWith(MockitoExtension.class)
-class DistributedLockExecutorTest {
+class DistributedLockExecutorServiceImplTest {
 
     @Mock
     private RedissonClient redissonClient;
@@ -27,7 +29,7 @@ class DistributedLockExecutorTest {
     private RLock lock;
 
     @InjectMocks
-    private DistributedLockExecutor executor;
+    private DistributedLockExecutorServiceImpl executor;
 
     @Test
     void shouldExecuteTaskAndReleaseLockWhenAcquired() throws Exception {
@@ -35,8 +37,8 @@ class DistributedLockExecutorTest {
         when(lock.tryLock(5, 10, TimeUnit.SECONDS)).thenReturn(true);
         when(lock.isHeldByCurrentThread()).thenReturn(true);
 
-        String result = executor.executeWithLock("gate-1", 5, 10, TimeUnit.SECONDS,
-                () -> "SUCCESS");
+        var result = executor.executeWithLock("gate-1", 5,
+                10, TimeUnit.SECONDS, () -> "SUCCESS");
 
         assertEquals("SUCCESS", result);
         verify(lock).unlock();
@@ -47,19 +49,18 @@ class DistributedLockExecutorTest {
         when(redissonClient.getLock("gate-1")).thenReturn(lock);
         when(lock.tryLock(1, 10, TimeUnit.SECONDS)).thenReturn(false);
 
-        assertThrows(
-                GateSlotAlreadyLockedException.class,
-                () -> executor.executeWithLock("gate-1", 1, 10, TimeUnit.SECONDS, () -> "DATA"));
+        assertThrows(GateSlotAlreadyLockedException.class,
+                () -> executor.executeWithLock("gate-1", 1,
+                        10, TimeUnit.SECONDS, () -> "DATA"));
     }
 
     @Test
     void shouldRestoreInterruptStatusAndThrowCustomException() throws Exception {
         when(redissonClient.getLock("gate-1")).thenReturn(lock);
         when(lock.tryLock(anyLong(), anyLong(), any())).thenThrow(new InterruptedException());
-
-        assertThrows(
-                GateBookingInterruptedException.class,
-                () -> executor.executeWithLock("gate-1", 1, 10, TimeUnit.SECONDS, () -> "DATA"));
+        assertThrows(GateBookingInterruptedException.class,
+                () -> executor.executeWithLock("gate-1", 1,
+                        10, TimeUnit.SECONDS, () -> "DATA"));
         assertTrue(Thread.currentThread().isInterrupted());
     }
 }

@@ -20,9 +20,9 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Type;
 
 @Entity
-@Table(name = "gate_booking_slots")
 @Getter
 @NoArgsConstructor
+@Table(name = "gate_booking_slots")
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class GateBookingSlot {
 

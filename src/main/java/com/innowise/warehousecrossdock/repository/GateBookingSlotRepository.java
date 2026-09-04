@@ -1,11 +1,12 @@
 package com.innowise.warehousecrossdock.repository;
 
 import com.innowise.warehousecrossdock.model.GateBookingSlot;
-import java.time.ZonedDateTime;
-import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.time.ZonedDateTime;
+import java.util.UUID;
 
 public interface GateBookingSlotRepository extends JpaRepository<GateBookingSlot, UUID> {
 
@@ -17,8 +18,7 @@ public interface GateBookingSlotRepository extends JpaRepository<GateBookingSlot
                   AND status <> 'CANCELLED'
                 FOR UPDATE
             )""", nativeQuery = true)
-    boolean existsOverlapping(
-            @Param("gateId") UUID gateId,
+    boolean existsOverlapping(@Param("gateId") UUID gateId,
             @Param("startTime") ZonedDateTime startTime,
             @Param("endTime") ZonedDateTime endTime);
 }
