@@ -17,7 +17,7 @@ public class GateBookingServiceImpl implements GateBookingService {
     private static final String RESERVATION_TIMER_NAME = "dock_slot_reservation_duration_seconds";
 
     private final GateLockFacade gateLockFacade;
-    private final GateBookingTransactionalOps transactionalOps;
+    private final GateBookingTransactionalOpsImpl transactionalOps;
     private final MeterRegistry meterRegistry;
 
     @Override

@@ -7,7 +7,7 @@ import com.innowise.warehousecrossdock.exception.SlotAlreadyBookedException;
 import com.innowise.warehousecrossdock.model.*;
 import com.innowise.warehousecrossdock.repository.GateBookingSlotRepository;
 import com.innowise.warehousecrossdock.repository.GateRepository;
-import com.innowise.warehousecrossdock.service.impl.GateBookingTransactionalOps;
+import com.innowise.warehousecrossdock.service.impl.GateBookingTransactionalOpsImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,7 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class GateBookingTransactionalOpsTest {
+class GateBookingTransactionalOpsImplTest {
 
     @Mock
     private GateRepository gateRepository;
@@ -34,7 +34,7 @@ class GateBookingTransactionalOpsTest {
     private GateBookingSlotRepository slotRepository;
 
     @InjectMocks
-    private GateBookingTransactionalOps ops;
+    private GateBookingTransactionalOpsImpl ops;
 
     private final UUID hubId = UUID.randomUUID();
     private final UUID gateId = UUID.randomUUID();
@@ -79,7 +79,7 @@ class GateBookingTransactionalOpsTest {
 
     @Test
     void throwsIncompatibleGate_whenGateIsTooWarmForFrozenCargo() {
-        ReserveSlotRequest frozenCargoRequest = new ReserveSlotRequest(gateId, request.routeId(),
+        var frozenCargoRequest = new ReserveSlotRequest(gateId, request.routeId(),
                 request.startTime(), request.endTime(),
                 TransportType.TRUCK, TemperatureMode.FROZEN);
         when(gateRepository.findByIdAndHubId(gateId, hubId))
