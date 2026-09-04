@@ -1,6 +1,7 @@
-package com.innowise.warehousecrossdock.lock;
+package com.innowise.warehousecrossdock.service;
 
 import com.innowise.warehousecrossdock.exception.GateSlotAlreadyLockedException;
+import com.innowise.warehousecrossdock.service.impl.DistributedLockExecutorServiceImpl;
 import com.innowise.warehousecrossdock.util.AbstractIntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,10 +18,10 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class DistributedLockExecutorIntegrationTest extends AbstractIntegrationTest {
+class DistributedLockExecutorServiceImplIntegrationTest extends AbstractIntegrationTest {
 
     private RedissonClient redissonClient;
-    private DistributedLockExecutor executor;
+    private DistributedLockExecutorServiceImpl executor;
 
     public static final String FIRST_THREAD_EXPECTED_RESULT = "Thread A done";
     public static final String SECOND_THREAD_EXPECTED_RESULT = "Thread B done";
@@ -34,7 +35,7 @@ class DistributedLockExecutorIntegrationTest extends AbstractIntegrationTest {
                     + REDIS_CONTAINER.getMappedPort(6379));
 
         redissonClient = Redisson.create(config);
-        executor = new DistributedLockExecutor(redissonClient);
+        executor = new DistributedLockExecutorServiceImpl(redissonClient);
     }
 
     @AfterEach

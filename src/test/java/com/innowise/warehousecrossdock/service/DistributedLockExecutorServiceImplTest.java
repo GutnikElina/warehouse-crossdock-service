@@ -1,4 +1,4 @@
-package com.innowise.warehousecrossdock.lock;
+package com.innowise.warehousecrossdock.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -9,6 +9,8 @@ import static org.mockito.Mockito.when;
 import com.innowise.warehousecrossdock.exception.GateBookingInterruptedException;
 import com.innowise.warehousecrossdock.exception.GateSlotAlreadyLockedException;
 import java.util.concurrent.TimeUnit;
+
+import com.innowise.warehousecrossdock.service.impl.DistributedLockExecutorServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,7 +20,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 
 @ExtendWith(MockitoExtension.class)
-class DistributedLockExecutorTest {
+class DistributedLockExecutorServiceImplTest {
 
     @Mock
     private RedissonClient redissonClient;
@@ -27,7 +29,7 @@ class DistributedLockExecutorTest {
     private RLock lock;
 
     @InjectMocks
-    private DistributedLockExecutor executor;
+    private DistributedLockExecutorServiceImpl executor;
 
     @Test
     void shouldExecuteTaskAndReleaseLockWhenAcquired() throws Exception {

@@ -1,7 +1,8 @@
-package com.innowise.warehousecrossdock.lock;
+package com.innowise.warehousecrossdock.service.impl;
 
 import com.innowise.warehousecrossdock.exception.GateBookingInterruptedException;
 import com.innowise.warehousecrossdock.exception.GateSlotAlreadyLockedException;
+import com.innowise.warehousecrossdock.service.DistributedLockExecutorService;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
@@ -11,7 +12,7 @@ import java.util.function.Supplier;
 
 @Component
 @RequiredArgsConstructor
-public class DistributedLockExecutor {
+public class DistributedLockExecutorServiceImpl implements DistributedLockExecutorService {
 
     private final RedissonClient redissonClient;
 

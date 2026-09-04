@@ -3,7 +3,6 @@ package com.innowise.warehousecrossdock.service;
 import com.innowise.warehousecrossdock.dto.ReserveSlotRequest;
 import com.innowise.warehousecrossdock.dto.ReserveSlotResponse;
 import com.innowise.warehousecrossdock.exception.GateSlotAlreadyLockedException;
-import com.innowise.warehousecrossdock.facade.GateLockFacade;
 import com.innowise.warehousecrossdock.model.TemperatureMode;
 import com.innowise.warehousecrossdock.model.TransportType;
 import com.innowise.warehousecrossdock.service.impl.GateBookingServiceImpl;
@@ -32,7 +31,7 @@ import static org.mockito.Mockito.*;
 class GateBookingServiceImplTest {
 
     @Mock
-    private GateLockFacade gateLockFacade;
+    private GateLockService gateLockService;
     @Mock
     private GateBookingTransactionalOpsImpl transactionalOps;
     @Mock
@@ -64,7 +63,7 @@ class GateBookingServiceImplTest {
     void delegatesToTransactionalOps_throughTheGateLock() {
         var expectedResponse = mock(ReserveSlotResponse.class);
         when(transactionalOps.checkAndBook(hubId, request)).thenReturn(expectedResponse);
-        when(gateLockFacade.executeWithGateLock(eq(request.gateId()), any(Supplier.class)))
+        when(gateLockService.executeWithGateLock(eq(request.gateId()), any(Supplier.class)))
             .thenAnswer(inv -> inv.getArgument(1, Supplier.class).get());
 
         var actualResponse = service.reserveSlot(hubId, request);
@@ -77,7 +76,7 @@ class GateBookingServiceImplTest {
     @Test
     @SuppressWarnings("unchecked")
     void propagatesLockExceptions_andStillRecordsTheTimer() {
-        when(gateLockFacade.executeWithGateLock(eq(request.gateId()), any(Supplier.class)))
+        when(gateLockService.executeWithGateLock(eq(request.gateId()), any(Supplier.class)))
             .thenThrow(new GateSlotAlreadyLockedException());
 
         assertThatThrownBy(() -> service.reserveSlot(hubId, request))
