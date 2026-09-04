@@ -1,14 +1,6 @@
 package com.innowise.warehousecrossdock.lock;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import com.innowise.warehousecrossdock.exception.GateSlotAlreadyLockedException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
 import com.innowise.warehousecrossdock.util.AbstractIntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,10 +9,21 @@ import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 class DistributedLockExecutorIntegrationTest extends AbstractIntegrationTest {
 
     private RedissonClient redissonClient;
     private DistributedLockExecutor executor;
+
+    public static final String FIRST_THREAD_EXPECTED_RESULT = "Thread A done";
+    public static final String SECOND_THREAD_EXPECTED_RESULT = "Thread B done";
 
     @BeforeEach
     void setUp() {
@@ -43,50 +46,46 @@ class DistributedLockExecutorIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void shouldThrowExceptionWhenSecondThreadTriesToAcquireSameLock() throws Exception {
-        String lockKey = "gate-slot-101";
+        final String lockKey = "gate-slot-101";
+        final int counter = 1;
 
-        CountDownLatch lockAcquiredByA = new CountDownLatch(1);
-        CountDownLatch allowAToFinish = new CountDownLatch(1);
+        var lockAcquiredByThread = new CountDownLatch(counter);
+        var allowThreadToFinishLock = new CountDownLatch(counter);
 
-        CompletableFuture<Void> threadA = CompletableFuture.runAsync(
-                () -> executor.executeWithLock(
-                        lockKey,
-                        100,
-                        2000,
-                        TimeUnit.MILLISECONDS,
-                        () -> {
-                            lockAcquiredByA.countDown();
+        var firstThread = CompletableFuture.runAsync(
+                () -> executor.executeWithLock(lockKey, 100,
+                        2000, TimeUnit.MILLISECONDS, () -> {
+                            lockAcquiredByThread.countDown();
                             try {
-                                allowAToFinish.await();
+                                allowThreadToFinishLock.await();
                             } catch (InterruptedException e) {
                                 Thread.currentThread().interrupt();
                             }
-                            return "Thread A done";
+                            return FIRST_THREAD_EXPECTED_RESULT;
                         }));
+        lockAcquiredByThread.await();
 
-        lockAcquiredByA.await();
+        var secondThread = CompletableFuture.runAsync(
+                () -> executor.executeWithLock(lockKey, 100,
+                        2000, TimeUnit.MILLISECONDS, () -> SECOND_THREAD_EXPECTED_RESULT));
 
-        CompletableFuture<Void> threadB = CompletableFuture.runAsync(
-                () -> executor.executeWithLock(
-                        lockKey, 100, 2000, TimeUnit.MILLISECONDS, () -> "Thread B done"));
-
-        ExecutionException exception = assertThrows(ExecutionException.class, threadB::get);
+        var exception = assertThrows(ExecutionException.class, secondThread::get);
         assertThat(exception.getCause()).isInstanceOf(GateSlotAlreadyLockedException.class);
 
-        allowAToFinish.countDown();
-        threadA.get();
+        allowThreadToFinishLock.countDown();
+        firstThread.get();
     }
 
     @Test
     void shouldAllowSecondThreadToAcquireLockAfterFirstReleasesIt() {
-        String lockKey = "gate-slot-102";
+        final String lockKey = "gate-slot-102";
 
-        String resultA = executor.executeWithLock(lockKey, 100, 1000, TimeUnit.MILLISECONDS,
-                () -> "Result A");
-        String resultB = executor.executeWithLock(lockKey, 100, 1000, TimeUnit.MILLISECONDS,
-                () -> "Result B");
+        var firstThreadResult = executor.executeWithLock(lockKey, 100,
+                1000, TimeUnit.MILLISECONDS, () -> FIRST_THREAD_EXPECTED_RESULT);
+        var secondThreadResult = executor.executeWithLock(lockKey, 100,
+                1000, TimeUnit.MILLISECONDS, () -> SECOND_THREAD_EXPECTED_RESULT);
 
-        assertThat(resultA).isEqualTo("Result A");
-        assertThat(resultB).isEqualTo("Result B");
+        assertThat(firstThreadResult).isEqualTo(FIRST_THREAD_EXPECTED_RESULT);
+        assertThat(secondThreadResult).isEqualTo(SECOND_THREAD_EXPECTED_RESULT);
     }
 }

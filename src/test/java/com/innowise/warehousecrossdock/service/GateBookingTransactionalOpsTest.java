@@ -1,26 +1,13 @@
 package com.innowise.warehousecrossdock.service;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 import com.innowise.warehousecrossdock.dto.ReserveSlotRequest;
-import com.innowise.warehousecrossdock.dto.ReserveSlotResponse;
 import com.innowise.warehousecrossdock.exception.GateNotFoundException;
 import com.innowise.warehousecrossdock.exception.IncompatibleGateException;
 import com.innowise.warehousecrossdock.exception.SlotAlreadyBookedException;
-import com.innowise.warehousecrossdock.model.DockGate;
-import com.innowise.warehousecrossdock.model.GateBookingSlot;
-import com.innowise.warehousecrossdock.model.GateBookingStatus;
-import com.innowise.warehousecrossdock.model.TemperatureMode;
-import com.innowise.warehousecrossdock.model.TransportType;
+import com.innowise.warehousecrossdock.model.*;
 import com.innowise.warehousecrossdock.repository.GateBookingSlotRepository;
 import com.innowise.warehousecrossdock.repository.GateRepository;
 import com.innowise.warehousecrossdock.service.impl.GateBookingTransactionalOps;
-import java.time.OffsetDateTime;
-import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,15 +16,25 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.time.OffsetDateTime;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
 class GateBookingTransactionalOpsTest {
 
     @Mock
-    GateRepository gateRepository;
+    private GateRepository gateRepository;
     @Mock
-    GateBookingSlotRepository slotRepository;
+    private GateBookingSlotRepository slotRepository;
+
     @InjectMocks
-    GateBookingTransactionalOps ops;
+    private GateBookingTransactionalOps ops;
 
     private final UUID hubId = UUID.randomUUID();
     private final UUID gateId = UUID.randomUUID();
@@ -46,35 +43,32 @@ class GateBookingTransactionalOpsTest {
 
     @BeforeEach
     void setUp() {
-        request = new ReserveSlotRequest(
-                gateId,
-                UUID.randomUUID(),
+        request = new ReserveSlotRequest(gateId, UUID.randomUUID(),
                 OffsetDateTime.parse("2026-09-01T14:00:00Z"),
                 OffsetDateTime.parse("2026-09-01T14:45:00Z"),
-                TransportType.TRUCK,
-                TemperatureMode.DRY);
-        compatibleGate = new DockGate(gateId, hubId, "Gate A1", TemperatureMode.DRY,
-                TransportType.TRUCK);
+                TransportType.TRUCK, TemperatureMode.DRY);
+        compatibleGate = new DockGate(gateId, hubId, "Gate A1",
+                TemperatureMode.DRY, TransportType.TRUCK);
     }
 
     @Test
     void booksSlot_whenGateExistsAndNoOverlap() {
         when(gateRepository.findByIdAndHubId(gateId, hubId))
             .thenReturn(Optional.of(compatibleGate));
-        when(slotRepository.existsOverlapping(
-                gateId, request.startTime().toZonedDateTime(), request.endTime().toZonedDateTime()))
+        when(slotRepository.existsOverlapping(gateId, request.startTime().toZonedDateTime(),
+                request.endTime().toZonedDateTime()))
             .thenReturn(false);
 
-        ReserveSlotResponse response = ops.checkAndBook(hubId, request);
+        var reserveSlotResponse = ops.checkAndBook(hubId, request);
 
-        assertThat(response.status()).isEqualTo(GateBookingStatus.BOOKED);
+        assertThat(reserveSlotResponse.status()).isEqualTo(GateBookingStatus.BOOKED);
         verify(slotRepository).saveAndFlush(any(GateBookingSlot.class));
     }
 
     @Test
     void throwsIncompatibleGate_whenTransportTypeNotSupported() {
-        DockGate containerOnlyGate = new DockGate(gateId, hubId, "Gate B2", TemperatureMode.DRY,
-                TransportType.CONTAINER_TRUCK);
+        var containerOnlyGate = new DockGate(gateId, hubId, "Gate B2",
+                TemperatureMode.DRY, TransportType.CONTAINER_TRUCK);
         when(gateRepository.findByIdAndHubId(gateId, hubId))
             .thenReturn(Optional.of(containerOnlyGate));
 
@@ -85,13 +79,9 @@ class GateBookingTransactionalOpsTest {
 
     @Test
     void throwsIncompatibleGate_whenGateIsTooWarmForFrozenCargo() {
-        ReserveSlotRequest frozenCargoRequest = new ReserveSlotRequest(
-                gateId,
-                request.routeId(),
-                request.startTime(),
-                request.endTime(),
-                TransportType.TRUCK,
-                TemperatureMode.FROZEN);
+        ReserveSlotRequest frozenCargoRequest = new ReserveSlotRequest(gateId, request.routeId(),
+                request.startTime(), request.endTime(),
+                TransportType.TRUCK, TemperatureMode.FROZEN);
         when(gateRepository.findByIdAndHubId(gateId, hubId))
             .thenReturn(Optional.of(compatibleGate));
 
@@ -103,8 +93,8 @@ class GateBookingTransactionalOpsTest {
     void throwsSlotAlreadyBooked_whenOverlapDetectedByPreCheck() {
         when(gateRepository.findByIdAndHubId(gateId, hubId))
             .thenReturn(Optional.of(compatibleGate));
-        when(slotRepository.existsOverlapping(
-                gateId, request.startTime().toZonedDateTime(), request.endTime().toZonedDateTime()))
+        when(slotRepository.existsOverlapping(gateId, request.startTime().toZonedDateTime(),
+                request.endTime().toZonedDateTime()))
             .thenReturn(true);
 
         assertThatThrownBy(() -> ops.checkAndBook(hubId, request))

@@ -35,8 +35,8 @@ class DistributedLockExecutorTest {
         when(lock.tryLock(5, 10, TimeUnit.SECONDS)).thenReturn(true);
         when(lock.isHeldByCurrentThread()).thenReturn(true);
 
-        String result = executor.executeWithLock("gate-1", 5, 10, TimeUnit.SECONDS,
-                () -> "SUCCESS");
+        var result = executor.executeWithLock("gate-1", 5,
+                10, TimeUnit.SECONDS, () -> "SUCCESS");
 
         assertEquals("SUCCESS", result);
         verify(lock).unlock();
@@ -47,19 +47,18 @@ class DistributedLockExecutorTest {
         when(redissonClient.getLock("gate-1")).thenReturn(lock);
         when(lock.tryLock(1, 10, TimeUnit.SECONDS)).thenReturn(false);
 
-        assertThrows(
-                GateSlotAlreadyLockedException.class,
-                () -> executor.executeWithLock("gate-1", 1, 10, TimeUnit.SECONDS, () -> "DATA"));
+        assertThrows(GateSlotAlreadyLockedException.class,
+                () -> executor.executeWithLock("gate-1", 1,
+                        10, TimeUnit.SECONDS, () -> "DATA"));
     }
 
     @Test
     void shouldRestoreInterruptStatusAndThrowCustomException() throws Exception {
         when(redissonClient.getLock("gate-1")).thenReturn(lock);
         when(lock.tryLock(anyLong(), anyLong(), any())).thenThrow(new InterruptedException());
-
-        assertThrows(
-                GateBookingInterruptedException.class,
-                () -> executor.executeWithLock("gate-1", 1, 10, TimeUnit.SECONDS, () -> "DATA"));
+        assertThrows(GateBookingInterruptedException.class,
+                () -> executor.executeWithLock("gate-1", 1,
+                        10, TimeUnit.SECONDS, () -> "DATA"));
         assertTrue(Thread.currentThread().isInterrupted());
     }
 }
