@@ -1,8 +1,11 @@
 package com.innowise.warehousecrossdock.controller;
 
+import com.innowise.warehousecrossdock.dto.AvailableGateSlotsResponse;
 import com.innowise.warehousecrossdock.dto.ReserveSlotRequest;
 import com.innowise.warehousecrossdock.dto.ReserveSlotResponse;
-import com.innowise.warehousecrossdock.service.GateBookingService;
+import com.innowise.warehousecrossdock.dto.SearchAvailableSlotsRequest;
+import java.util.List;
+import com.innowise.warehousecrossdock.service.impl.GateBookingServiceImpl;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -19,13 +22,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class GateBookingController {
 
-    private final GateBookingService gateBookingServiceImpl;
+    private final GateBookingServiceImpl gateBookingService;
 
     @PostMapping("/{hubId}/slots/reserve")
     public ResponseEntity<ReserveSlotResponse> reserveSlot(
-            @PathVariable UUID hubId, @Valid @RequestBody ReserveSlotRequest request) {
+            @PathVariable UUID hubId,
+            @Valid @RequestBody ReserveSlotRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(gateBookingService.reserveSlot(hubId, request));
+    }
 
-        ReserveSlotResponse response = gateBookingServiceImpl.reserveSlot(hubId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    @PostMapping("/{hubId}/slots/search")
+    public ResponseEntity<List<AvailableGateSlotsResponse>> searchAvailableSlots(
+            @PathVariable UUID hubId,
+            @Valid @RequestBody SearchAvailableSlotsRequest request) {
+        return ResponseEntity.ok(gateBookingService.searchAvailableSlots(hubId, request));
     }
 }

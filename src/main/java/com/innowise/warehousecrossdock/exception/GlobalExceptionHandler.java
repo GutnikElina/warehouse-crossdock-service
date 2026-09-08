@@ -42,34 +42,6 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(exception, conflict);
     }
 
-    @ExceptionHandler(GateBookingInterruptedException.class)
-    public ResponseEntity<ErrorDetails> handleInterrupt(GateBookingInterruptedException e) {
-        HttpStatus serverError = HttpStatus.INTERNAL_SERVER_ERROR;
-
-        var exception = ErrorDetails.builder()
-            .message(e.getMessage())
-            .errorName(serverError.getReasonPhrase())
-            .httpStatus(serverError.value())
-            .timestamp(Instant.now())
-            .build();
-
-        return new ResponseEntity<>(exception, serverError);
-    }
-
-    @ExceptionHandler(GateNotFoundException.class)
-    public ResponseEntity<ErrorDetails> handleGateNotFound(GateNotFoundException e) {
-        HttpStatus notFound = HttpStatus.NOT_FOUND;
-
-        var exception = ErrorDetails.builder()
-            .message(e.getMessage())
-            .errorName(notFound.getReasonPhrase())
-            .httpStatus(notFound.value())
-            .timestamp(Instant.now())
-            .build();
-
-        return new ResponseEntity<>(exception, notFound);
-    }
-
     @ExceptionHandler(SlotAlreadyBookedException.class)
     public ResponseEntity<ErrorDetails> handleSlotAlreadyBooked(SlotAlreadyBookedException e) {
         HttpStatus conflict = HttpStatus.CONFLICT;
@@ -84,8 +56,40 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(exception, conflict);
     }
 
-    @ExceptionHandler(IncompatibleGateException.class)
-    public ResponseEntity<ErrorDetails> handleIncompatibleGate(IncompatibleGateException e) {
+    @ExceptionHandler(GateBookingInterruptedException.class)
+    public ResponseEntity<ErrorDetails> handleInterrupt(GateBookingInterruptedException e) {
+        HttpStatus serverError = HttpStatus.INTERNAL_SERVER_ERROR;
+
+        var exception = ErrorDetails.builder()
+            .message(e.getMessage())
+            .errorName(serverError.getReasonPhrase())
+            .httpStatus(serverError.value())
+            .timestamp(Instant.now())
+            .build();
+
+        return new ResponseEntity<>(exception, serverError);
+    }
+
+    @ExceptionHandler({
+            GateNotFoundException.class,
+            NoAvailableGatesException.class,
+            HubNotFoundException.class
+    })
+    public ResponseEntity<ErrorDetails> handleNotFound(RuntimeException e) {
+        HttpStatus notFound = HttpStatus.NOT_FOUND;
+
+        var exception = ErrorDetails.builder()
+            .message(e.getMessage())
+            .errorName(notFound.getReasonPhrase())
+            .httpStatus(notFound.value())
+            .timestamp(Instant.now())
+            .build();
+
+        return new ResponseEntity<>(exception, notFound);
+    }
+
+    @ExceptionHandler({HubClosedException.class, IncompatibleGateException.class})
+    public ResponseEntity<ErrorDetails> handleUnprocessableEntity(RuntimeException e) {
         HttpStatus unprocessable = HttpStatus.UNPROCESSABLE_ENTITY;
 
         var exception = ErrorDetails.builder()

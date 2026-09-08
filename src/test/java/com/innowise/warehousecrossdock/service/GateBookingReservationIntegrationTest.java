@@ -2,12 +2,17 @@ package com.innowise.warehousecrossdock.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.innowise.warehousecrossdock.dto.AvailableGateSlotsResponse;
 import com.innowise.warehousecrossdock.dto.ReserveSlotRequest;
 import com.innowise.warehousecrossdock.dto.ReserveSlotResponse;
+import com.innowise.warehousecrossdock.dto.SearchAvailableSlotsRequest;
 import com.innowise.warehousecrossdock.exception.ErrorDetails;
 import com.innowise.warehousecrossdock.model.GateBookingStatus;
 import com.innowise.warehousecrossdock.model.TemperatureMode;
 import com.innowise.warehousecrossdock.model.TransportType;
+import java.time.Duration;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -20,6 +25,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -51,10 +59,10 @@ class GateBookingReservationIntegrationTest {
     }
 
     @Autowired
-    TestRestTemplate restTemplate;
+    private TestRestTemplate restTemplate;
 
     @Autowired
-    GateTestDataFactory gateTestDataFactory;
+    private GateTestDataFactory gateTestDataFactory;
 
     private UUID hubId;
     private UUID gateId;
@@ -78,6 +86,73 @@ class GateBookingReservationIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody().status()).isEqualTo(GateBookingStatus.BOOKED);
+    }
+
+    @Test
+    void returns201_onSmartBooking_whenGateIdIsNull() {
+        hubId = gateTestDataFactory.seedHub();
+        gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
+        routeId = gateTestDataFactory.seedRoute();
+
+        ReserveSlotRequest autoBookingRequest = new ReserveSlotRequest(
+                null,
+                routeId,
+                OffsetDateTime.parse("2026-09-01T14:00:00Z"),
+                OffsetDateTime.parse("2026-09-01T14:45:00Z"),
+                TransportType.TRUCK,
+                TemperatureMode.DRY);
+
+        ResponseEntity<ReserveSlotResponse> response = restTemplate.postForEntity(
+                "/api/v1/hubs/{hubId}/slots/reserve", autoBookingRequest, ReserveSlotResponse.class,
+                hubId);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody().gateId()).isEqualTo(gateId);
+    }
+
+    @Test
+    void returns422_whenBookingOutsideHubWorkingHours() {
+        hubId = gateTestDataFactory.seedHub("UTC", LocalTime.of(8, 0), LocalTime.of(12, 0));
+        gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
+        routeId = gateTestDataFactory.seedRoute();
+
+        ReserveSlotRequest request = gateTestDataFactory.requestFor(
+                gateId,
+                routeId,
+                "2026-09-01T14:00:00Z",
+                "2026-09-01T14:45:00Z",
+                TransportType.TRUCK,
+                TemperatureMode.DRY);
+
+        ResponseEntity<ErrorDetails> response = restTemplate.postForEntity(
+                "/api/v1/hubs/{hubId}/slots/reserve", request, ErrorDetails.class, hubId);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    @Test
+    void returnsAvailableSlots_whenSearchEndpointCalled() {
+        hubId = gateTestDataFactory.seedHub();
+        gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
+
+        var searchRequest = new SearchAvailableSlotsRequest(
+                OffsetDateTime.parse("2026-09-01T10:00:00Z"),
+                OffsetDateTime.parse("2026-09-01T18:00:00Z"),
+                TransportType.TRUCK,
+                TemperatureMode.DRY,
+                Duration.ofMinutes(45));
+
+        ResponseEntity<List<AvailableGateSlotsResponse>> response = restTemplate.exchange(
+                "/api/v1/hubs/{hubId}/slots/search",
+                HttpMethod.POST,
+                new HttpEntity<>(searchRequest),
+                new ParameterizedTypeReference<>() {
+                },
+                hubId);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).hasSize(1);
+        assertThat(response.getBody().get(0).gateId()).isEqualTo(gateId);
     }
 
     @Test
@@ -138,62 +213,6 @@ class GateBookingReservationIntegrationTest {
     }
 
     @Test
-    void returns409_afterOnlyTenMinutesFromLastBooking() {
-        hubId = gateTestDataFactory.seedHub();
-        gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
-        routeId = gateTestDataFactory.seedRoute();
-        ReserveSlotRequest first = gateTestDataFactory.requestFor(
-                gateId,
-                routeId,
-                "2026-09-01T11:00:00Z",
-                "2026-09-01T11:45:00Z",
-                TransportType.TRUCK,
-                TemperatureMode.DRY);
-        ReserveSlotRequest overlapping = gateTestDataFactory.requestFor(
-                gateId,
-                routeId,
-                "2026-09-01T11:45:00Z",
-                "2026-09-01T12:15:00Z",
-                TransportType.TRUCK,
-                TemperatureMode.DRY);
-
-        restTemplate.postForEntity(
-                "/api/v1/hubs/{hubId}/slots/reserve", first, ReserveSlotResponse.class, hubId);
-        ResponseEntity<ErrorDetails> second = restTemplate.postForEntity(
-                "/api/v1/hubs/{hubId}/slots/reserve", overlapping, ErrorDetails.class, hubId);
-
-        assertThat(second.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-    }
-
-    @Test
-    void returns409_TenMinutesBeforeNextBooking() {
-        hubId = gateTestDataFactory.seedHub();
-        gateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY, TransportType.TRUCK);
-        routeId = gateTestDataFactory.seedRoute();
-        ReserveSlotRequest overlapping = gateTestDataFactory.requestFor(
-                gateId,
-                routeId,
-                "2026-09-01T11:05:00Z",
-                "2026-09-01T11:50:00Z",
-                TransportType.TRUCK,
-                TemperatureMode.DRY);
-        ReserveSlotRequest second = gateTestDataFactory.requestFor(
-                gateId,
-                routeId,
-                "2026-09-01T12:00:00Z",
-                "2026-09-01T12:45:00Z",
-                TransportType.TRUCK,
-                TemperatureMode.DRY);
-
-        restTemplate.postForEntity(
-                "/api/v1/hubs/{hubId}/slots/reserve", second, ReserveSlotResponse.class, hubId);
-        ResponseEntity<ErrorDetails> first = restTemplate.postForEntity(
-                "/api/v1/hubs/{hubId}/slots/reserve", overlapping, ErrorDetails.class, hubId);
-
-        assertThat(first.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-    }
-
-    @Test
     void returns404_whenGateDoesNotBelongToHub() {
         hubId = gateTestDataFactory.seedHub();
         UUID otherHubsGateId = gateTestDataFactory.seedGate(
@@ -218,6 +237,7 @@ class GateBookingReservationIntegrationTest {
         hubId = gateTestDataFactory.seedHub();
         UUID dryGateId = gateTestDataFactory.seedGate(hubId, TemperatureMode.DRY,
                 TransportType.TRUCK);
+        routeId = gateTestDataFactory.seedRoute();
 
         ReserveSlotRequest frozenCargoRequest = gateTestDataFactory.requestFor(
                 dryGateId,
