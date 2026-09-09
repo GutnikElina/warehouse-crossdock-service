@@ -18,8 +18,7 @@ public class DistributedLockExecutorServiceImpl implements DistributedLockExecut
 
     @SuppressWarnings("java:S2222")
     public <T> T executeWithLock(String lockKey, long waitTime,
-            long leaseTime, TimeUnit unit,
-            Supplier<T> task) {
+            long leaseTime, TimeUnit unit, Supplier<T> task) {
         var lock = redissonClient.getLock(lockKey);
         try {
             if (!lock.tryLock(waitTime, leaseTime, unit)) {

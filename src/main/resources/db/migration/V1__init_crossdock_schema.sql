@@ -1,5 +1,4 @@
-CREATE
-EXTENSION IF NOT EXISTS btree_gist;
+CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 CREATE TABLE warehouse_hubs
 (
