@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: warehouse-crossdock-service
+
+  datasource:
+    username: ${POSTGRES_USER:test}
+    password: ${POSTGRES_PASSWORD:test}
+    driver-class-name: org.postgresql.Driver
+
+  data:
+    redis:
+      timeout: 1000ms
+
+  spring:
+    flyway:
+      enabled: true
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+
+  threads:
+    virtual:
+      enabled: true

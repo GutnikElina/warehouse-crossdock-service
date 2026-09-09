@@ -1,8 +1,7 @@
 package com.innowise.warehousecrossdock.exception;
 
 import com.innowise.warehousecrossdock.constant.ExceptionMessage;
-import java.time.Instant;
-import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,111 +9,70 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.Instant;
+import java.util.stream.Collectors;
+
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    public static final HttpStatus CONFLICT = HttpStatus.CONFLICT;
+    public static final HttpStatus NOT_FOUND = HttpStatus.NOT_FOUND;
+    public static final HttpStatus BAD_REQUEST = HttpStatus.BAD_REQUEST;
+    public static final HttpStatus UNPROCESSABLE_CONTENT = HttpStatus.UNPROCESSABLE_CONTENT;
+    public static final HttpStatus INTERNAL_SERVER_ERROR = HttpStatus.INTERNAL_SERVER_ERROR;
+
     @ExceptionHandler(GateSlotAlreadyLockedException.class)
     public ResponseEntity<ErrorDetails> handleLocked(GateSlotAlreadyLockedException e) {
-        HttpStatus conflict = HttpStatus.CONFLICT;
-
-        var exception = ErrorDetails.builder()
-            .message(e.getMessage())
-            .errorName(conflict.getReasonPhrase())
-            .httpStatus(conflict.value())
-            .timestamp(Instant.now())
-            .build();
-
-        return new ResponseEntity<>(exception, conflict);
+        log.warn(e.getMessage());
+        return new ResponseEntity<>(new ErrorDetails(e.getMessage(), Instant.now()), CONFLICT);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorDetails> handleDataIntegrityViolation(
             DataIntegrityViolationException e) {
-        HttpStatus conflict = HttpStatus.CONFLICT;
-
-        var exception = ErrorDetails.builder()
-            .message(ExceptionMessage.DATA_INTEGRITY_VIOLATION_EXCEPTION)
-            .errorName(conflict.getReasonPhrase())
-            .httpStatus(conflict.value())
-            .timestamp(Instant.now())
-            .build();
-
-        return new ResponseEntity<>(exception, conflict);
+        log.warn(e.getMessage());
+        return new ResponseEntity<>(
+                new ErrorDetails(ExceptionMessage.DATA_INTEGRITY_VIOLATION_EXCEPTION,
+                        Instant.now()),
+                CONFLICT);
     }
 
     @ExceptionHandler(GateBookingInterruptedException.class)
     public ResponseEntity<ErrorDetails> handleInterrupt(GateBookingInterruptedException e) {
-        HttpStatus serverError = HttpStatus.INTERNAL_SERVER_ERROR;
-
-        var exception = ErrorDetails.builder()
-            .message(e.getMessage())
-            .errorName(serverError.getReasonPhrase())
-            .httpStatus(serverError.value())
-            .timestamp(Instant.now())
-            .build();
-
-        return new ResponseEntity<>(exception, serverError);
+        log.warn(e.getMessage());
+        return new ResponseEntity<>(new ErrorDetails(e.getMessage(), Instant.now()),
+                INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(GateNotFoundException.class)
     public ResponseEntity<ErrorDetails> handleGateNotFound(GateNotFoundException e) {
-        HttpStatus notFound = HttpStatus.NOT_FOUND;
-
-        var exception = ErrorDetails.builder()
-            .message(e.getMessage())
-            .errorName(notFound.getReasonPhrase())
-            .httpStatus(notFound.value())
-            .timestamp(Instant.now())
-            .build();
-
-        return new ResponseEntity<>(exception, notFound);
+        log.warn(e.getMessage());
+        return new ResponseEntity<>(new ErrorDetails(e.getMessage(), Instant.now()), NOT_FOUND);
     }
 
     @ExceptionHandler(SlotAlreadyBookedException.class)
     public ResponseEntity<ErrorDetails> handleSlotAlreadyBooked(SlotAlreadyBookedException e) {
-        HttpStatus conflict = HttpStatus.CONFLICT;
-
-        var exception = ErrorDetails.builder()
-            .message(e.getMessage())
-            .errorName(conflict.getReasonPhrase())
-            .httpStatus(conflict.value())
-            .timestamp(Instant.now())
-            .build();
-
-        return new ResponseEntity<>(exception, conflict);
+        log.warn(e.getMessage());
+        return new ResponseEntity<>(new ErrorDetails(e.getMessage(), Instant.now()), CONFLICT);
     }
 
     @ExceptionHandler(IncompatibleGateException.class)
     public ResponseEntity<ErrorDetails> handleIncompatibleGate(IncompatibleGateException e) {
-        HttpStatus unprocessable = HttpStatus.UNPROCESSABLE_ENTITY;
-
-        var exception = ErrorDetails.builder()
-            .message(e.getMessage())
-            .errorName(unprocessable.getReasonPhrase())
-            .httpStatus(unprocessable.value())
-            .timestamp(Instant.now())
-            .build();
-
-        return new ResponseEntity<>(exception, unprocessable);
+        log.warn(e.getMessage());
+        return new ResponseEntity<>(new ErrorDetails(e.getMessage(), Instant.now()),
+                UNPROCESSABLE_CONTENT);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorDetails> handleMethodArgumentNotValid(
             MethodArgumentNotValidException e) {
-
-        HttpStatus badRequest = HttpStatus.BAD_REQUEST;
-
-        var message = e.getBindingResult().getFieldErrors().stream()
+        var message = e.getBindingResult()
+            .getFieldErrors()
+            .stream()
             .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
             .collect(Collectors.joining("; "));
-
-        var exception = ErrorDetails.builder()
-            .message(message)
-            .errorName(badRequest.getReasonPhrase())
-            .httpStatus(badRequest.value())
-            .timestamp(Instant.now())
-            .build();
-
-        return new ResponseEntity<>(exception, badRequest);
+        log.warn(message);
+        return new ResponseEntity<>(new ErrorDetails(message, Instant.now()), BAD_REQUEST);
     }
 }
